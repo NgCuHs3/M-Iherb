@@ -1,0 +1,37 @@
+### Select items
+PUT https://checkout9.iherb.com/api/Carts/v2/lineitems/toggle HTTP/2
+Cookie: ihr-crt-ab=recmd_0_b&freeShippingAddon_100_a&moveToListConfirmation_0_b&listandbuy_100_a&newPromoCodeEntrance_100_a; transactionIds=undefined; ih-cc-pref=eyJmdW5jdGlvbmFsIjowLCJhbmFseXRpY3MiOjB9; dscid=a71bf6a5-d174-4676-9f13-c3d35a759057; _pxvid=e5ffa6dd-81e2-11ee-a494-f0a1219787cc; ihr-session-id1=aid=50b323d3-d5ed-44ad-9080-850f5afd8afd; FPID=FPID2.2.eR1Jn0QgAYQfQmFtO9fUBUpp9SFRG%2BsYZ4P1YoxQfmg%3D.1699852203; FPAU=1.2.1364182463.1699852203; sd_client_id=07b2dcd0-6eea-42bc-85ad-9794b23a55e5; ihr-cart=init_ctc%3DVN; _lc2_fpi=93d7398a661d--01hf3hcdzyd7q92k6cv0txa2ac; __pxvid=e75d4d65-81e2-11ee-a11a-0242ac120004; _gcl_au=1.1.1332552156.1699852205; _fbp=fb.1.1699852205675.93544245; _scid=09587458-73fb-4c6b-9adf-7af657e87c88; _rdt_uuid=1699852206046.746c71d4-aa11-43f7-8066-2fbd47991044; _tt_enable_cookie=1; _ttp=j1uk1yDwG-ldS3_5upB0MSX8kD4; _pin_unauth=dWlkPU5qQTJabVppTUdVdFpUUmlNQzAwT1RFekxXRmpZV010WmpFM01EZGhZemhpT0Rjeg; optimizelyEndUserId=oeu1700643102462r0.3316506069433405; _vwo_uuid_v2=D1582D1A42FABD3F15B1056FEA7102109|b361305719f224fb82fb3cf766822c36; ih-experiment=eyJzUERQIjp7IkVuZERhdGUiOiIwMS8wMS8yNCIsIkNob3NlblZhcmlhbnQiOjF9LCJ2M0hOYXYiOnsiRW5kRGF0ZSI6IjAxLzAxLzI0IiwiQ2hvc2VuVmFyaWFudCI6MX0sInBkcGhndCI6eyJFbmREYXRlIjoiMDEvMDEvMjQiLCJDaG9zZW5WYXJpYW50IjowfSwiYWZiIjp7IkVuZERhdGUiOiIwMS8wMS8yNCIsIkNob3NlblZhcmlhbnQiOjF9LCJjaGF0Ym90Ijp7IkVuZERhdGUiOiIwMS8wMS8yNCIsIkNob3NlblZhcmlhbnQiOjF9LCJyZnkiOnsiRW5kRGF0ZSI6IjIwMjMtMTItMTFUMDA6MDA6MDBaIiwiQ2hvc2VuVmFyaWFudCI6MCwiU291cmNlIjoxfSwibmV3cCI6eyJFbmREYXRlIjoiMjAyNC0wMS0wOFQwMDowMDowMFoiLCJDaG9zZW5WYXJpYW50IjoxLCJTb3VyY2UiOjF9LCJzcGVjIjp7IkVuZERhdGUiOiIyMDI0LTAxLTA4VDAwOjAwOjAwWiIsIkNob3NlblZhcmlhbnQiOjEsIlNvdXJjZSI6MX0sImNhdiI6eyJFbmREYXRlIjoiMjAyNC0wMS0xNVQwMDowMDowMFoiLCJDaG9zZW5WYXJpYW50IjowLCJTb3VyY2UiOjF9LCJmcHQiOnsiRW5kRGF0ZSI6IjIwMjQtMDItMTdUMDA6MDA6MDBaIiwiQ2hvc2VuVmFyaWFudCI6MCwiU291cmNlIjoxfX0=; _vwo_ds=3%241700643105%3A3.10661218%3A%3A; _vis_opt_s=1%7C; _fs_sample_user=false; _pin_unauth=dWlkPU5qQTJabVppTUdVdFpUUmlNQzAwT1RFekxXRmpZV010WmpFM01EZGhZemhpT0Rjeg; _cc_id=60055e225ebd9b691290d942125700bf; _sctr=1%7C1700586000000; cto_bundle=6LkEWV9SRyUyRkJhJTJCeUJ6c1lEJTJCc0FmOWdjJTJGdjVKWHRVQ1VHJTJCa2toJTJCMlYlMkJmYjFwMGFIajlueUExaWJ1SXhFbzlBZmZkbnZneGJOZW5uVkJQWE5TTHN6Y0liWHBDdlFCWiUyRjhXYVhpVDR0TFB4VXl0R25neVV5TE5LYTVCbjF3Tm42bkZ1T0dLcUhxJTJCZU5yT2NxeVFSTzZuUEc5TkElM0QlM0Q; ihr-ocid1=50b323d3-d5ed-44ad-9080-850f5afd8afd; ih-preference=store=0&country=VN&language=en-US&currency=VND; persistent-ab-testing={"shopByCategory":{"experimentKey":"personalized-hp"}}; _li_dcdm_c=.iherb.com; IR_gbd=iherb.com; pxcts=ee15d107-8b5f-11ee-af03-2e86a4b40676; sd_identity={"userId":"","traits":{"personId":null,"properties":{"hashedEmail":null,"hashedPhone":null,"source_platform":"web"}}}; ih-search-hist-1=W3siayI6Im1hZ25lc2l1bSIsInQiOjB9LHsiayI6Im9tZWdhIDMiLCJ0IjowfSx7ImsiOiJ0b25na2F0IGFsaSIsInQiOjB9LHsiayI6InppbmMiLCJ0IjowfV0=; _pxhd=Z-5Q8Ob5QnS4QyDZYIcwXi/D/WYdcW-/3zaha9GSVxSbC6bF7HGk1sgIycn1afzqxoBnmCygauS/hUyVAxHCKA==:atyxwnzEyAkGqAHAFiLMe-mlP/hJylCHDhFx1w2RH-J6OOkmdTRoduLn81BVYoewsuRMp8iDj/u1HofP9MgFOPYnF4NlfpBUp-0-SB5y6o4=; __cf_bm=Y7.9buESb1HlzADc8N90Dv0vqL9ToHPZZ8mGPMhvlL0-1701146493-0-AbAGa/MhSVwmyr0c/1YW0cfCWzRxx2HZZ4geu1RZb+oYEZRJWuP3EFHjzTCPdIGOIJ63SFOtxpZHwH5tvjvUcum3YIFejdTMRq95VEx6BtLk; __cfruid=ebfc4ee24501807d6d8c273467f418e0595f3629-1701146493; ihr-temse=expires=28%20Nov%202023%2005%3A41%3A32Z; ForceTrafficSplitType=A; ForceTrafficSplitType=A; _gid=GA1.2.604609373.1701146497; FPLC=Jc7z57ucrP8YGgR7%2BHpWEyMPGdLRkzKNYw%2FZqYKVAXMOfIYsw0p%2FxIvbQ1YmDPKWEvobE8SconcU18X3yEJXN%2BA5Og7FKjqOp7%2FJDK%2BHridEhnt7uvHp09Ks7O%2FiIg%3D%3D; __li_idex_cache_e30={}; srid=; _clck=myir8o%7C2%7Cfh3%7C0%7C1412; cf_clearance=ufkpkTe1DR1VEHLCRgLi2oi9msjUv8oAu1YRGxLEkuM-1701147092-0-1-37edda35.a403d250.60ec85d5-250.0.0; ihr-ds-vps=8341,662,883,62118; ih-hp-vp=12; user-related={"HasNavigatedSite":{"timestamp":1701147191726}}; ih-rvp=H4sIAAAAAAAAA23LMQ7CQAwEwL%2B4Tk63e7Zj%2BxUUV4HooEjBCxB%2FJwUFEkw%2Fl6ec9ptUDMUic3%2FcpYSdYwVWxuxaNgreskNz5Fley6e483fY7FGKYjQLN9v4PQjE37MdoTRakpHw41zf3eWws5oAAAA%3D; FPGSID=1.1701146502.1701147480.G-SW3NJP516F.YOGpzMUcEyKEH0uFsNITvw; _ga_SW3NJP516F=GS1.1.1701146497.4.1.1701147476.0.0.0; iher-pref1==&accsave=0&bi=5&ifv=1&lan=en-US&lchg=1&sccode=VN&scurcode=VND&storeid=0&wp=2; _ga=GA1.2.1406273275.1699852203; _dc_gtm_UA-229961-54=1; _px3=75d6ad7d8fa0a5ebaf5cb1b247f12751f21d8094480bb407f67020173d5ff749:0hJyo1sRLwcWFsLrRRFz/4t5rnE7Nd23jRtxduZCx6vYDEsgOvDkNbtc9vwwVZJ3/psT8ZflUkfyYcWslvRIxw==:1000:K2Hbxkmj5NCT9e5cSvBYX7omXVB9xDwsudVxediWUWLIdB//ShzuwUxoq2OAFrgBtzREmBVSpqm4Dl74WcIK6JpLVhyLtzTrK0XLLzw3gYMcWXlVibMqZoI0E26236MNgRnYCLlvWHAe8cZrMjilMadO70hNmjKl5/6XENjftqtZixt/uwaAWhTi93rzth6TqCzXIVgrljbrCBXzwhSAQNvx+pbCRnXC35EOd/30ptM=; fs_lua=1.1701147477593; fs_uid=#RG1FH#8c775540-c1b2-48ce-b661-50dcba668309:fabe3764-89d8-478d-b431-3ef2bcfa6232:1701146497401::9#/1726808106; _scid_r=09587458-73fb-4c6b-9adf-7af657e87c88; IR_19332=1701147478846%7C0%7C1701147478846%7C%7C; IR_PI=18b78887-583b-11ee-a8de-1f54bf3fa9ca%7C1701233878846; _uetsid=6d0e83808da811eeb0fb7b315f5e92a7; _uetvid=08739b20583b11eeae374db8377c1406; _clsk=1cwit4n%7C1701147483931%7C10%7C0%7Cb.clarity.ms%2Fcollect
+Content-Length: 136
+Sec-Ch-Ua: "Chromium";v="119", "Not?A_Brand";v="24"
+X-Newrelic-Id: undefined
+Tracestate: 2746152@nr=0-1-2746152-1401922629-b02e90440765978c----1701147494381
+Traceparent: 00-91689af0b91a04f088d6c212af64e130-b02e90440765978c-01
+Sec-Ch-Ua-Mobile: ?0
+Apiseed: 5
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6045.159 Safari/537.36
+Content-Type: application/json
+Pref: {"lac":"en-US","ctc":"VN","crc":"VND","crs":0,"storeid":0,"som":"kilograms"}
+Customerid: 50b323d3-d5ed-44ad-9080-850f5afd8afd
+Sec-Ch-Ua-Platform: "Windows"
+Accept: */*
+Origin: https://checkout9.iherb.com
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Mode: cors
+Sec-Fetch-Dest: empty
+Referer: https://checkout9.iherb.com/cart
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.9
+Priority: u=1, i
+
+{
+    "lineItems": [
+        {
+            "selected": true,
+            "productId": 883
+        },
+        {
+            "selected": true,
+            "productId": 9743,
+        }
+    ]
+}

@@ -1,0 +1,538 @@
+{
+    "isCanadaDDP": false,
+    "isChinaDDP": false,
+    "isDDU": false,
+    "isZipCodeNeeded": true,
+    "proceedToCheckout": false,
+    "unifiedPricing": false,
+    "currentStore": 0,
+    "country":
+    {
+        "countryCode": "VN",
+        "languageCode": "en-US",
+        "displayName": "Vietnam"
+    },
+    "cartId": "ef74ba33-3dc3-4d49-aae5-7a250cacc5a0",
+    "orderDisclaimers":
+    [],
+    "cartQuantity": 3,
+    "selectedQuantity": 3,
+    "cartTotal": "₫1,597,705",
+    "currencyCode": "VND",
+    "duties": "₫173,967",
+    "vat": "₫133,375",
+    "customsDutyTotal": "₫482,230",
+    "languageCode": "en-US",
+    "shippingMessage": null,
+    "shippingTotal": "Unavailable",
+    "shippingServiceId": 131,
+    "taxTotal": "",
+    "taxTotalForMobile": "₫482,230",
+    "taxLabel": "Tax",
+    "dutyAndTaxLabel": "Duties & Taxes",
+    "showSalesTaxInfo": false,
+    "prepaidShippingTotal": 482230.0,
+    "prepaidShippingTotalFormatted": "₫482,230",
+    "invalidReferalCodeMessage": null,
+    "invalidPromoCodeMessage": "Promo is eligible for first-time customers.(NEW20)",
+    "isEuIossCountry": false,
+    "toastType": 2,
+    "cartDiscount":
+    [
+        {
+            "amount": 41264.0,
+            "formattedAmount": "-₫41,264",
+            "discountMessage": "",
+            "discountDisplayType": null,
+            "discountValueType": 0,
+            "discountType": 114,
+            "discountLevel": 0,
+            "discountValue": 5.00,
+            "promoEndDate": "2025-11-01T23:59:00",
+            "timeLeftForPromo": "16900h : 40m,0",
+            "endDateUnixTimeStamp": "1762066740",
+            "additionalData": "[]",
+            "isFirstTimeCustomer": false,
+            "orderDiscountDistributeProductDict":
+            {
+                "112998":
+                {
+                    "discountAmount": 26220.0,
+                    "availableQuantity": 1
+                },
+                "7947":
+                {
+                    "discountAmount": 15044.0,
+                    "availableQuantity": 1
+                }
+            },
+            "warningMessage":
+            {
+                "warningMsgType": 1,
+                "warningMsg": "Product not qualified for discount",
+                "messageLevel": 0,
+                "displayCode": null,
+                "discountType": 114
+            },
+            "eligibleMessage": null,
+            "appliedToProductsCount": 2
+        }
+    ],
+    "cartErrors":
+    [
+        {
+            "errorType": 0,
+            "errorSource": 2,
+            "errorCode": 112,
+            "errorMessage": "Due to VN customs regulations, the amount of \"Subtotal\" can not exceed ₫1,063,673 per order.",
+            "isInUnavailableGroup": false,
+            "subErrorCode": 5
+        }
+    ],
+    "lineItems":
+    [
+        {
+            "status": 1,
+            "productId": 112998,
+            "quantity": 1,
+            "listPrice": "₫524,400",
+            "price": "₫498,180",
+            "surcharge": "",
+            "productInfo":
+            {
+                "product":
+                {
+                    "noAir": false,
+                    "restrictedInCA": null,
+                    "prop65Message": null,
+                    "showPrice": true,
+                    "material": 0,
+                    "status": 0,
+                    "primaryImageIndex": 32,
+                    "listPrice": 524400.0,
+                    "retailPrice": null,
+                    "sac": 6.3015,
+                    "actualWeight": 0.47,
+                    "height": 2.8499999046325684,
+                    "length": 5.25,
+                    "dimensionalWeight": 0.25237951807228914,
+                    "shippingWeight": 0.47,
+                    "width": 2.799999952316284,
+                    "productId": 112998,
+                    "brandCode": "CAL",
+                    "brandName": "KAL",
+                    "displayName": "High Absorption Magnesium Glycinate 350, 160 VegCaps",
+                    "iced": "N",
+                    "languageCode": "en-US",
+                    "partNumber": "CAL39022",
+                    "salesTaxCode": "PF050700",
+                    "urlName": "kal-high-absorption-magnesium-glycinate-350-160-vegcaps",
+                    "averageRating": 0.0,
+                    "reviewCount": 0,
+                    "id": 112998
+                },
+                "partNumber": "CAL-39022",
+                "productUrl": "https://vn.iherb.com/pr/kal-high-absorption-magnesium-glycinate-350-160-vegcaps/112998",
+                "weight": "0.47",
+                "weightKg": "0.21",
+                "brandName": "KAL",
+                "displayName": "High Absorption Magnesium Glycinate 350, 160 VegCaps"
+            },
+            "lineItemErrors":
+            [],
+            "lineItemDiscount":
+            [
+                {
+                    "amount": 26220.0,
+                    "amountInUSD": "1.05",
+                    "formattedAmount": "₫26,220",
+                    "discountMessage": "",
+                    "discountDisplayType": "Rewards Discount",
+                    "discountValueType": 0,
+                    "discountType": 114,
+                    "discountLevel": 0,
+                    "discountValue": 5.00,
+                    "promoEndDate": null,
+                    "timeLeftForPromo": null,
+                    "endDateUnixTimeStamp": null,
+                    "subscriptionDiscountDescription": null,
+                    "specialEndingMessage": null
+                }
+            ],
+            "total": "₫524,400",
+            "totalInUSD": "20.99",
+            "adjustedTotal": "₫498,180",
+            "adjustedTotalInUSD": "19.94",
+            "eligibleForDiscount": true,
+            "isHazardOrIced": false,
+            "showPrice": true,
+            "currentStore": 8,
+            "type1Activated": false,
+            "eligibleSimpleDiscountType": null,
+            "storeId": 0,
+            "warningMessages":
+            [],
+            "maxAvailableQuantity": 36,
+            "selected": true,
+            "selectorDisabled": false,
+            "subscribable": false,
+            "frequencyId": null,
+            "frequencyText": null,
+            "subscriptionId": null,
+            "isLimitProductQty": false,
+            "isInUnavailableGroup": false,
+            "subscriptionText": null,
+            "subscriptionCaption": null,
+            "subscriptionTooltip": null,
+            "isAvailable": true,
+            "isDiscontinued": false,
+            "isOutOfStock": false,
+            "isRestricted": false,
+            "stockQty": 1303,
+            "nextDeliveryDate": null,
+            "skipNextDelivery": true,
+            "isOneTime": false
+        },
+        {
+            "status": 1,
+            "productId": 7947,
+            "quantity": 1,
+            "listPrice": "₫300,895",
+            "price": "₫285,851",
+            "surcharge": "",
+            "productInfo":
+            {
+                "product":
+                {
+                    "noAir": false,
+                    "restrictedInCA": null,
+                    "prop65Message": null,
+                    "showPrice": true,
+                    "material": 0,
+                    "status": 0,
+                    "primaryImageIndex": 65,
+                    "listPrice": 300895.0,
+                    "retailPrice": 21.19,
+                    "sac": 0.0,
+                    "actualWeight": 0.135,
+                    "height": 2.049999952316284,
+                    "length": 3.8499999046325684,
+                    "dimensionalWeight": 0.09984487951807229,
+                    "shippingWeight": 0.135,
+                    "width": 2.0999999046325684,
+                    "productId": 7947,
+                    "brandCode": "DRB",
+                    "brandName": "Doctor's Best",
+                    "displayName": "High Absorption CoQ10 with BioPerine, 100 mg, 60 Softgels",
+                    "iced": "N",
+                    "languageCode": "en-US",
+                    "partNumber": "DRB00088",
+                    "salesTaxCode": "PF050700",
+                    "urlName": "doctor-s-best-high-absorption-coq10-with-bioperine-100-mg-60-softgels",
+                    "averageRating": 0.0,
+                    "reviewCount": 0,
+                    "id": 7947
+                },
+                "partNumber": "DRB-00088",
+                "productUrl": "https://vn.iherb.com/pr/doctor-s-best-high-absorption-coq10-with-bioperine-100-mg-60-softgels/7947",
+                "weight": "0.14",
+                "weightKg": "0.06",
+                "brandName": "Doctor's Best",
+                "displayName": "High Absorption CoQ10 with BioPerine, 100 mg, 60 Softgels"
+            },
+            "lineItemErrors":
+            [],
+            "lineItemDiscount":
+            [
+                {
+                    "amount": 15044.0,
+                    "amountInUSD": "0.60",
+                    "formattedAmount": "₫15,044",
+                    "discountMessage": "",
+                    "discountDisplayType": "Rewards Discount",
+                    "discountValueType": 0,
+                    "discountType": 114,
+                    "discountLevel": 0,
+                    "discountValue": 5.00,
+                    "promoEndDate": null,
+                    "timeLeftForPromo": null,
+                    "endDateUnixTimeStamp": null,
+                    "subscriptionDiscountDescription": null,
+                    "specialEndingMessage": null
+                }
+            ],
+            "total": "₫300,895",
+            "totalInUSD": "12.04",
+            "adjustedTotal": "₫285,851",
+            "adjustedTotalInUSD": "11.44",
+            "eligibleForDiscount": true,
+            "isHazardOrIced": false,
+            "showPrice": true,
+            "currentStore": 8,
+            "type1Activated": false,
+            "eligibleSimpleDiscountType": null,
+            "storeId": 0,
+            "warningMessages":
+            [],
+            "maxAvailableQuantity": 36,
+            "selected": true,
+            "selectorDisabled": false,
+            "subscribable": false,
+            "frequencyId": null,
+            "frequencyText": null,
+            "subscriptionId": null,
+            "isLimitProductQty": false,
+            "isInUnavailableGroup": false,
+            "subscriptionText": null,
+            "subscriptionCaption": null,
+            "subscriptionTooltip": null,
+            "isAvailable": true,
+            "isDiscontinued": false,
+            "isOutOfStock": false,
+            "isRestricted": false,
+            "stockQty": 526,
+            "nextDeliveryDate": null,
+            "skipNextDelivery": true,
+            "isOneTime": false
+        },
+        {
+            "status": 1,
+            "productId": 37836,
+            "quantity": 1,
+            "listPrice": "₫368,271",
+            "price": "₫331,444",
+            "surcharge": "",
+            "productInfo":
+            {
+                "product":
+                {
+                    "noAir": false,
+                    "restrictedInCA": null,
+                    "prop65Message": null,
+                    "showPrice": true,
+                    "material": 0,
+                    "status": 0,
+                    "primaryImageIndex": 14,
+                    "listPrice": 368271.0,
+                    "retailPrice": 19.99,
+                    "sac": 0.732320,
+                    "actualWeight": 0.24,
+                    "height": 2.299999952316284,
+                    "length": 4.400000095367432,
+                    "dimensionalWeight": 0.14021686746987952,
+                    "shippingWeight": 0.24,
+                    "width": 2.299999952316284,
+                    "productId": 37836,
+                    "brandCode": "NOW",
+                    "brandName": "NOW Foods",
+                    "displayName": "NAC, 600 mg, 100 Veg Capsules",
+                    "iced": "N",
+                    "languageCode": "en-US",
+                    "partNumber": "NOW00085",
+                    "salesTaxCode": "PF050700",
+                    "urlName": "now-foods-nac-600-mg-100-veg-capsules",
+                    "averageRating": 0.0,
+                    "reviewCount": 0,
+                    "id": 37836
+                },
+                "partNumber": "NOW-00085",
+                "productUrl": "https://vn.iherb.com/pr/now-foods-nac-600-mg-100-veg-capsules/37836",
+                "weight": "0.24",
+                "weightKg": "0.11",
+                "brandName": "NOW Foods",
+                "displayName": "NAC, 600 mg, 100 Veg Capsules"
+            },
+            "lineItemErrors":
+            [],
+            "lineItemDiscount":
+            [
+                {
+                    "amount": 36827.0,
+                    "amountInUSD": "1.47",
+                    "formattedAmount": "₫36,827",
+                    "discountMessage": null,
+                    "discountDisplayType": "Special!",
+                    "discountValueType": 0,
+                    "discountType": 1,
+                    "discountLevel": 1,
+                    "discountValue": 10.0000,
+                    "promoEndDate": null,
+                    "timeLeftForPromo": null,
+                    "endDateUnixTimeStamp": null,
+                    "subscriptionDiscountDescription": null,
+                    "specialEndingMessage": null
+                }
+            ],
+            "total": "₫368,271",
+            "totalInUSD": "14.74",
+            "adjustedTotal": "₫331,444",
+            "adjustedTotalInUSD": "13.27",
+            "eligibleForDiscount": true,
+            "isHazardOrIced": false,
+            "showPrice": true,
+            "currentStore": 8,
+            "type1Activated": false,
+            "eligibleSimpleDiscountType": null,
+            "storeId": 0,
+            "warningMessages":
+            [],
+            "maxAvailableQuantity": 36,
+            "selected": true,
+            "selectorDisabled": false,
+            "subscribable": false,
+            "frequencyId": null,
+            "frequencyText": null,
+            "subscriptionId": null,
+            "isLimitProductQty": false,
+            "isInUnavailableGroup": false,
+            "subscriptionText": null,
+            "subscriptionCaption": null,
+            "subscriptionTooltip": null,
+            "isAvailable": true,
+            "isDiscontinued": false,
+            "isOutOfStock": false,
+            "isRestricted": false,
+            "stockQty": 1054,
+            "nextDeliveryDate": null,
+            "skipNextDelivery": true,
+            "isOneTime": false
+        }
+    ],
+    "shippingMethodList":
+    [
+        {
+            "serviceId": "131",
+            "serviceName": "SFExpress_DDP",
+            "fromDatePst": "2023-12-07T12:00:00-08:00",
+            "toDatePst": "2023-12-21T12:00:00-08:00",
+            "displayName": "SF Express",
+            "shippingFreeDisplayName": null,
+            "imageUrl": "https://s3.images-iherb.com/static/i/ss/SfExpress.png",
+            "prepaidShippingCost": "",
+            "originalShippingTotal": null,
+            "shippingCost":
+            {
+                "label": "Shipping Costs",
+                "content": "₫0",
+                "isTaxCollectedOnDelivery": false
+            },
+            "shippingDutyAndTax":
+            {
+                "label": "Prepaid Duties & Taxes (included in order summary)",
+                "content": "₫482,230",
+                "isTaxCollectedOnDelivery": false
+            },
+            "freeShippingGap": null,
+            "freeShippingThreshold": "₫948,000",
+            "freeShippingLocalCurrencyThreshold": "948000.0",
+            "hideServiceLogo": false,
+            "isClimateControl": false,
+            "unavailNotes":
+            {
+                "reasons":
+                [
+                    "Order total exceeds carrier price limit by ₫51,801."
+                ],
+                "message": "Shipping method is not available. Please adjust your cart if you would like to use this carrier."
+            },
+            "availableStatus": 1,
+            "isSelected": true,
+            "isFree": false,
+            "shippingRules":
+            [
+                "<span class='free-shipping'><span style='color: #2C7500;'><strong>Free for orders ₫948,000+</strong></span></span>"
+            ],
+            "additionalInfoList":
+            [
+                "<span class=\"additional-info\">Full tracking. Max ₫1,063,674 and 10 lbs (4.5 kg). No PO Box</span>"
+            ],
+            "actualServiceId": "131",
+            "orderDeliveryRange": "Dec 7 - Dec 21",
+            "isDDP": true,
+            "isDDU": false
+        }
+    ],
+    "adjustedSubTotal": "₫1,115,475",
+    "referralCode": "JIB4684",
+    "appliedCouponCodeType": 2,
+    "appliedCouponCodeStatus": 14,
+    "referralCodeCreateSpan": 638368228631023528,
+    "referralCodeCreateTimestamp": 1701226063102,
+    "rewardCreditApplied": "₫0",
+    "rewardCreditAppliedInUSD": 0.0,
+    "storeCreditApplied": "",
+    "shareUrl": "https://vn.iherb.com/tr/cb?pcodes=CAL-39022qty1_DRB-00088qty1_NOW-00085qty1",
+    "subTotal": "₫1,193,566",
+    "totalDiscount": "-₫78,091",
+    "totalProductDiscount": "-₫36,827",
+    "weightTotal": "0.85",
+    "weightTotalKg": "0.38",
+    "specialNote": "",
+    "disableAllSubscriptions": false,
+    "productDiscountsTotal": "-₫36,827",
+    "manualPromoDiscountsTotal": "",
+    "rewardsDiscountsTotal": "-₫41,264",
+    "shippingCreditDisplayName": null,
+    "postalCode": "92571",
+    "selfRewardsCode": "JUO6927",
+    "showGLPopupMsg": false,
+    "dutyAndTax":
+    {
+        "dutiesAndTaxes":
+        {
+            "label": "Duties & Taxes",
+            "content": "₫482,230",
+            "helpTitle": "Duty, Taxes, & Fees",
+            "helpContent": "Imported goods are subject to duties, taxes, and handling fees which are levied by the local government agency in Vietnam. With DDP (Delivered Duties Paid), you do not have to pay any additional duty/tax at the time of delivery.",
+            "isTaxCollectedOnDelivery": false
+        }
+    },
+    "shippingTotalDecimal": 0.0,
+    "subscribable": false,
+    "cluster": "",
+    "subscriptionCaption": null,
+    "subscriptionTooltip": null,
+    "orderDiscount":
+    {
+        "couponCode": "JIB4684",
+        "discountText": "Rewards discount applied",
+        "discountMessage": "Save <b>₫41,264</b> with rewards discount!",
+        "appliedToProductsCount": 2,
+        "appliedToProducts": "Applied to 2 items",
+        "toastMessage":
+        {
+            "type": 2,
+            "content": "Promo is eligible for first-time customers.(NEW20)"
+        },
+        "displayRemoveDiscountButton": false,
+        "validApplied": true,
+        "notApplicable": false,
+        "isPaymentCode": false,
+        "warningMessage":
+        {
+            "warningMsgType": 1,
+            "warningMsg": "Product not qualified for discount",
+            "messageLevel": 0,
+            "displayCode": null,
+            "discountType": 114
+        },
+        "discountMessageToolTip":
+        {
+            "reasonType": 5,
+            "title": "Ineligible Items",
+            "contents":
+            [
+                {
+                    "text": "NOW00085: A better promo has been applied."
+                }
+            ]
+        }
+    },
+    "freeShippingRatio": 100,
+    "freeShippingGap": "₫0",
+    "isCarrierAutoChanged": false,
+    "carrierChangedReason": null,
+    "skipDeliveryEnabled": true,
+    "autoPromoCode": null,
+    "totalSavedAndDeductionAmount": "₫78,091"
+}

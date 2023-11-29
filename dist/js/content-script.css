@@ -1,0 +1,61 @@
+.match-btn {
+    border: none !important;
+    background-color: transparent !important;
+    cursor: pointer !important;
+    outline: none !important;
+    background:  linear-gradient(137deg, rgba(178,181,17,1) 0%, rgba(1,185,71,1) 100%) !important; 
+    transition: transform 0.3s ease, filter 0.3s ease !important;
+}
+
+.match-btn:hover {
+    filter: brightness(120%); /* Make it more bright on hover */
+}
+  
+  /* Active effect */
+.match-btn:active {
+    transform: scale(0.95); /* Scale down to 95% on click */
+}
+
+.sole-notification {
+    position: fixed;
+    z-index: 9999;
+    top: 100px;
+    right: 4px;
+    width: -webkit-fit-content;
+    width: -moz-fit-content;
+    width: fit-content;
+    height: 50px;
+    background-color: #3498db;
+    border-radius: 10px;
+    padding: 4px 16px;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    min-width: 200px;
+    transition: right 200ms ease-in;
+}
+
+.sole-notification div {
+    width: -webkit-fit-content;
+    width: -moz-fit-content;
+    width: fit-content;
+}
+
+.sole-notification.notification-error {
+    background-color: rgb(219, 52, 105);
+}
+
+.sole-notification.notification-success {
+    background-color: #2fb74a;
+}
+
+.sole-notification.notification-hide {
+    right: -200px;
+}
+
+.sole-notification.notification-show {
+    right: 4px;
+}
