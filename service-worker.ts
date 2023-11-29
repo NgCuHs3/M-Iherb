@@ -1,12 +1,18 @@
-import { IherbModifyItem, MiningOrderItem } from "./core/IherbCheckoutApi";
+import IherbCheckoutApi, {
+  IherbModifyItem,
+  MiningOrderItem,
+  ResponseIherbApi,
+} from "./core/IherbCheckoutApi";
 import MatchOrders from "./core/MatchOrders";
 
 type ServiceInstance = {
+  iherbCheckoutApi: IherbCheckoutApi | undefined;
   matchOrders: MatchOrders | undefined;
 };
 
 const serviceInstance: ServiceInstance = {
   matchOrders: undefined,
+  iherbCheckoutApi: undefined,
 };
 
 // const serviceState = {};
@@ -24,27 +30,65 @@ async function onFoundGoodOrder(
   console.log("Found one new good order", currentOrder);
 }
 
+async function delegateApiRequestMethod(
+  url: string,
+  init: RequestInit
+): Promise<ResponseIherbApi> {
+  const [tab] = await chrome.tabs.query({
+    active: true,
+    lastFocusedWindow: true,
+  });
+
+  // make request via content script
+  const response = await chrome.tabs.sendMessage(tab.id as number, {
+    type: "api-request",
+    data: {
+      url,
+      init,
+    },
+  });
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    json: () => new Promise((resolve) => resolve(response.data)),
+  };
+}
+
 async function initMatchOrders(iherbItems: IherbModifyItem[]) {
   // already init
   if (serviceInstance.matchOrders) return;
-  serviceInstance.matchOrders = new MatchOrders();
+
+  serviceInstance.iherbCheckoutApi = new IherbCheckoutApi();
+  serviceInstance.iherbCheckoutApi.setCustomRequestMethod(
+    delegateApiRequestMethod
+  );
+
+  serviceInstance.matchOrders = new MatchOrders(
+    serviceInstance.iherbCheckoutApi
+  );
   await serviceInstance.matchOrders.init();
 
   console.log("matchOrders", JSON.stringify(serviceInstance.matchOrders));
+  console.log("iherbItems", iherbItems);
 
-  //await serviceInstance.matchOrders.start(iherbItems);
+  await serviceInstance.matchOrders.start(iherbItems);
 }
 
-async function addProductToMatchOrders(item: IherbModifyItem) {
+async function addProductToMatchOrders(
+  matchList: IherbModifyItem[],
+  newItem: IherbModifyItem
+) {
   // matchOrders not init so create new instance
   if (!serviceInstance.matchOrders) {
-    const data = await chrome.storage.local.get(["match-list"]);
-    const matchList: Array<any> = (data["match-list"] as Array<any>) || [];
-    await initMatchOrders(matchList as IherbModifyItem[]);
+    await initMatchOrders(matchList);
+    // matchList already have new item
+    return;
   }
 
+  console.log("MatchList", matchList);
   // add to product match
-  //serviceInstance.matchOrders?.addMatchItem(item);
+  serviceInstance.matchOrders?.addMatchItem(newItem);
 }
 
 async function removeProductFromMatchOrders(item: IherbModifyItem) {
@@ -70,7 +114,7 @@ async function handleAddProduct(productId: string): Promise<boolean> {
   });
 
   // add to match orders task
-  addProductToMatchOrders({
+  addProductToMatchOrders(matchList, {
     productId: parseInt(productId),
   });
 

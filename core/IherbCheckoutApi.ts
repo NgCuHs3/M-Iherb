@@ -44,7 +44,7 @@ export interface MiningResult {
 export interface ResponseIherbApi {
   ok: boolean;
   status: number;
-  json: () => any;
+  json: () => Promise<any>;
 }
 
 export type CustomRequestMethod = (
@@ -74,7 +74,7 @@ class IherbCheckoutApi {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
-      const data = response.json();
+      const data = await response.json();
       return data;
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -161,38 +161,24 @@ class IherbCheckoutApi {
   // the trick is create all over costs order to get
   // subtotal limit, free shipping threshold
   public async cartInfo(): Promise<CartInfo> {
-    let res = (await this.addLineItems([
+    // clear cart first
+    await this.clearLineItems();
+
+    const res = (await this.addLineItems([
       {
         // NOW Foods, Ultra Omega-3, 500 EPA / 250 DHA, 180 Enteric Coated Softgels
-        productId: 8341,
+        productId: 62118,
         quantity: 3,
       },
       {
         // NOW Foods, Double Strength L-Theanine, 200 mg, 120 Veg Capsules
-        productId: 54096,
+        productId: 102333,
         quantity: 3,
       },
     ])) as CartLineItems;
 
-    if (!res.shippingMethods || res.shippingMethods?.length <= 0) {
-      // throw new Error("Zip code wasn't applied");
-      // try apply zip code
-      await this.applyZipcode(71300);
-    }
-
-    // try again
-    res = (await this.addLineItems([
-      {
-        // NOW Foods, Ultra Omega-3, 500 EPA / 250 DHA, 180 Enteric Coated Softgels
-        productId: 8341,
-        quantity: 3,
-      },
-      {
-        // NOW Foods, Double Strength L-Theanine, 200 mg, 120 Veg Capsules
-        productId: 54096,
-        quantity: 3,
-      },
-    ])) as CartLineItems;
+    if (!res.shippingMethods || res.shippingMethods?.length <= 0)
+      throw new Error("Zip code wasn't applied");
 
     const freeShippingMinSpend: number = parseFloat(
       res.shippingMethods[0].freeShippingLocalCurrencyThreshold

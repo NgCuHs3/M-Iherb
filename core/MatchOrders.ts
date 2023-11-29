@@ -31,13 +31,14 @@ class MatchOrders extends EventEmitter {
   // match task thread
   private matchTask: Promise<boolean> | undefined;
 
-  constructor() {
+  constructor(iherbCheckoutApi: IherbCheckoutApi) {
     super();
-    this.iherbCheckoutApi = new IherbCheckoutApi();
+    this.iherbCheckoutApi = iherbCheckoutApi;
   }
 
-  public async init() {
-    this.getConstraintInfo();
+  public async init(): Promise<boolean> {
+    await this.getConstraintInfo();
+    return true;
   }
 
   private async getConstraintInfo() {

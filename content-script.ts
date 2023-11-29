@@ -1,6 +1,6 @@
 import "./styles/content-script.css";
 import debounce from "./util/debounce";
-import IherbCheckoutApi from "./core/IherbCheckoutApi";
+import IherbCheckoutApi, { ResponseIherbApi } from "./core/IherbCheckoutApi";
 
 var notification: HTMLElement;
 
@@ -146,8 +146,6 @@ async function getCookies() {
     },
   ]);
 
-  console.log(res);
-
   await iherbApi.clearLineItems();
 
   const cartInfo = await iherbApi.cartInfo();
@@ -173,4 +171,45 @@ async function getCookies() {
 }
 
 // Call the function when the content script is injected
-getCookies();
+// getCookies();
+
+async function makeRequest(
+  url: string,
+  init: RequestInit
+): Promise<Omit<ResponseIherbApi, "json"> & { data: any }> {
+  console.log("MAKE REQUEST");
+
+  let response: any;
+  try {
+    response = await fetch(url, init);
+
+    if (response.ok)
+      return {
+        ok: true,
+        status: response.status,
+        data: await response.json(),
+      };
+  } catch {}
+
+  return {
+    ok: false,
+    status: response?.status || 0,
+    data: null,
+  };
+}
+
+// message listener
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  switch (request.type) {
+    case "api-request":
+      const { url, init } = request.data;
+      makeRequest(url, init).then((res) => {
+        sendResponse({
+          ...res,
+        });
+      });
+      return true;
+    default:
+      break;
+  }
+});

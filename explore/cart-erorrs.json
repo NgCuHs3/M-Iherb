@@ -1,0 +1,26 @@
+[
+    {
+        "errorCode": 107,
+        "errorMessage": "Your cart contains out-of-stock or discontinued products. Remove them before proceeding to Checkout.",
+        "errorSource": 8,
+        "errorType": 0,
+        "isInUnavailableGroup": true,
+        "subErrorCode": 0
+    },
+    {
+        "errorCode": 112,
+        "errorMessage": "Due to VN customs regulations, no more than 10 items can be purchased per order.",
+        "errorSource": 2,
+        "errorType": 0,
+        "isInUnavailableGroup": false,
+        "subErrorCode": 4
+    },
+    {
+        "errorCode": 112,
+        "errorMessage": "Due to VN customs regulations, the amount of \"Subtotal\" can not exceed ₫1,063,673 per order.",
+        "errorSource": 2,
+        "errorType": 0,
+        "isInUnavailableGroup": false,
+        "subErrorCode": 5
+    }
+]
