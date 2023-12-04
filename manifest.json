@@ -15,7 +15,8 @@
     "content_scripts": [
         {
             "matches": [
-                "*://vn.iherb.com/*"
+                "*://vn.iherb.com/*",
+                "*://checkout9.iherb.com/*"
             ],
             "css": [
                 "js/content-script.css"
@@ -27,7 +28,7 @@
     ],
     "permissions": [
         "sidePanel",
-        "activeTab",
+        "tabs",
         "storage"
     ]
 }

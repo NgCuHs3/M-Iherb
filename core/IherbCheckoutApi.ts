@@ -4,6 +4,7 @@ import {
   generateIherbItemImage,
   convertPrice,
 } from "../util/data";
+import { IherbApiError, ZIP_CODE_NOT_APPLIED } from "./error";
 
 export interface IherbModifyItem {
   productId: number;
@@ -29,16 +30,16 @@ export interface CartInfo {
 
 export type MiningOrderItem = {
   quantity: number;
-} & Omit<IherbModifyItem, "quantityLimit">;
+} & Omit<IherbItem, "quantityLimit">;
 
 export interface MiningResult {
   total: number;
   tax: number;
   shipping: number;
   weight: number;
-  shareOrderUrl: String;
+  shareOrderUrl: string;
   proceedToCheckout: boolean;
-  miningOrder: MiningOrderItem[];
+  miningOrderItems: MiningOrderItem[];
 }
 
 export interface ResponseIherbApi {
@@ -70,14 +71,16 @@ class IherbCheckoutApi {
         response = (await fetch(url, init)) as any as ResponseIherbApi;
       }
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
+      if (!response.ok)
+        throw new IherbApiError(
+          `HTTP error: ${response.status}`,
+          response.status
+        );
 
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error(error);
       throw error;
     }
   }
@@ -178,7 +181,7 @@ class IherbCheckoutApi {
     ])) as CartLineItems;
 
     if (!res.shippingMethods || res.shippingMethods?.length <= 0)
-      throw new Error("Zip code wasn't applied");
+      throw new IherbApiError("Zip code wasn't applied", ZIP_CODE_NOT_APPLIED);
 
     const freeShippingMinSpend: number = parseFloat(
       res.shippingMethods[0].freeShippingLocalCurrencyThreshold
@@ -206,6 +209,8 @@ class IherbCheckoutApi {
       } as IherbModifyItem;
     });
 
+    console.log("overQuantityItems", overQuantityItems);
+
     const res = (await this.addLineItems(overQuantityItems)) as CartLineItems;
 
     const lineItems: LineItem[] = res.lineItems;
@@ -227,6 +232,11 @@ class IherbCheckoutApi {
     return iherbItems;
   }
 
+  public async mapOnceItem(item: IherbModifyItem): Promise<IherbItem> {
+    const mapItems = await this.mapItems([item]);
+    return mapItems[0];
+  }
+
   // mining order to know is it free tax, free shipping for not
   public async miningOrder(
     items: IherbModifyItem[],
@@ -245,10 +255,11 @@ class IherbCheckoutApi {
     const shareOrderUrl: string = cartLineItems.shareUrl;
     const proceedToCheckout: boolean = cartLineItems.proceedToCheckout;
 
-    const miningOrder: MiningOrderItem[] = cartLineItems.lineItems.map(
+    const miningOrderItems: MiningOrderItem[] = cartLineItems.lineItems.map(
       (item) => {
         return {
           productId: item.productId,
+          name: item.productInfo.displayName,
           price: convertPrice(item.price),
           quantity: item.quantity,
           weight: parseFloat(item.productInfo.weightKg),
@@ -267,7 +278,7 @@ class IherbCheckoutApi {
       weight,
       shareOrderUrl,
       proceedToCheckout,
-      miningOrder,
+      miningOrderItems,
     };
   }
 }

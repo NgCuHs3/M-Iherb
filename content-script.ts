@@ -82,6 +82,10 @@ function addMatchButton() {
   const generalAddBtn = document.getElementById(
     "btn-add-to-cart"
   ) as HTMLElement;
+
+  // not in product page
+  if (!generalAddBtn) return;
+
   const btn = generalAddBtn.querySelector("div button") as HTMLButtonElement;
 
   const productId = btn.getAttribute("data-product-id");
@@ -183,13 +187,19 @@ async function makeRequest(
   try {
     response = await fetch(url, init);
 
+    console.log("RESQUEST RES", response);
+
     if (response.ok)
       return {
         ok: true,
         status: response.status,
         data: await response.json(),
       };
-  } catch {}
+  } catch (error) {
+    console.log("error", error);
+    console.log("error", (error as any).status);
+    console.log("error", JSON.stringify(error));
+  }
 
   return {
     ok: false,
@@ -212,4 +222,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     default:
       break;
   }
+});
+
+// notify to service have iherb page load
+chrome.runtime.sendMessage({
+  type: "on-page-load",
 });

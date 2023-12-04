@@ -1,46 +1,83 @@
-import React from "react";
+import { GoodOrder } from "../service-worker";
 
-const OrderItem = () => {
-  return (
-    <div className="card card-compact bg-base-100 shadow">
-      <figure>
-        <div className="carousel">
-          <div className="carousel-item ">
-            <img
-              src="https://s3.images-iherb.com/now/now01662/m/38.jpg"
-              alt="Burger"
-              className="max-h-28"
-            />
-          </div>
-          <div className="carousel-item">
-            <img
-              src="https://s3.images-iherb.com/sor/sor54433/m/40.jpg"
-              alt="Burger"
-              className="max-h-28"
-            />
-          </div>
-          <div className="carousel-item">
-            <img
-              src="https://s3.images-iherb.com/mli/mli00952/m/218.jpg"
-              alt="Burger"
-              className="max-h-28"
-            />
+interface Props extends Omit<GoodOrder, "tax" | "proceedToCheckout"> {
+  onGo: (shareOrderUrl: string) => void;
+  onRemove: (goodOrderId: string) => void;
+}
+
+const OrderItem = ({
+  id,
+  total,
+  miningOrderItems,
+  shareOrderUrl,
+  shipping,
+  weight,
+  onGo,
+  onRemove,
+}: Props) => {
+  const rowItems = miningOrderItems.map((item) => (
+    <tr>
+      <td>
+        <div className="flex items-center gap-3">
+          <div className="w-16 h-16">
+            <img src={item.image} alt="Avatar Tailwind CSS Component" />
           </div>
         </div>
-      </figure>
+      </td>
+      <td>
+        <span className="font-normal">{item.name}</span>
+      </td>
+      <td>
+        <span className="text-primary">{item.quantity}</span>{" "}
+      </td>
+    </tr>
+  ));
+
+  return (
+    <div className="card card-compact bg-base-100 shadow">
       <div className="card-body">
-        <h2 className="card-title text-sm">Order includes 2 products</h2>
-        <p className="w-fit">Total: ₫945,000</p>
-        <div className="flex flex-row justify-between">
+        <div className="card-title">
+          <div className="overflow-x-auto">
+            <table className="table">
+              {/* head */}
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Item</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>{rowItems}</tbody>
+            </table>
+          </div>
+        </div>
+        <p className="w-fit font-semibold">Total: {total.toLocaleString()}₫</p>
+        <div className="flex flex-row justify-between ">
           <div>
-            <p className="text-xs w-fit">Shipping: ₫0</p>
+            <p className={"text-sm w-fit "}>
+              Shipping:{" "}
+              <span className={shipping > 0 ? "text-warning" : "text-success"}>
+                {shipping.toLocaleString()}₫
+              </span>
+            </p>
           </div>
           <div>
-            <p className="text-xs w-fit">Tax: ₫0</p>
+            <p className="text-sm w-fit">Weight: {weight}kg</p>
           </div>
         </div>
         <div className="card-actions justify-end">
-          <button className="btn btn-accent">Buy Now</button>
+          <button
+            className="btn btn-primary"
+            onClick={() => onGo(shareOrderUrl)}
+          >
+            Go to cart
+          </button>
+          <button
+            className="btn btn-error btn-outline"
+            onClick={() => onRemove(id)}
+          >
+            Remove
+          </button>
         </div>
       </div>
     </div>

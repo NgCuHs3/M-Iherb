@@ -1,6 +1,8 @@
-import React from "react";
+import { useSidePanelContext } from "./contexts/SidePanelContext";
 
 const Info = () => {
+  const { sidePanelState } = useSidePanelContext();
+
   return (
     <div className="overflow-x-auto">
       <table className="table">
@@ -15,12 +17,14 @@ const Info = () => {
           {/* row 1 */}
           <tr>
             <td>FREE Shipping min</td>
-            <td>₫948,000</td>
+            <td>
+              ₫{sidePanelState.cartInfo.freeShippingMinSpend.toLocaleString()}
+            </td>
           </tr>
           {/* row 2 */}
           <tr>
             <td>VN Subtotal Limit</td>
-            <td>₫1,063,673</td>
+            <td>₫{sidePanelState.cartInfo.subTotalLimit.toLocaleString()}</td>
           </tr>
         </tbody>
       </table>

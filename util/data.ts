@@ -48,3 +48,33 @@ export function convertPrice(priceString: string) {
 
   return priceFloat;
 }
+
+export interface HashItem {
+  count: number;
+  code: number | string;
+}
+
+export async function generateHashForOrder(hashItems: HashItem[]) {
+  const hashString: string = hashItems.reduce((currentStr, item) => {
+    return currentStr + `_${item.code}x${item.code}`;
+  }, "");
+
+  const encoder = new TextEncoder();
+  const data = encoder.encode(hashString);
+
+  try {
+    // Use the SubtleCrypto API to calculate the SHA-256 hash
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+
+    // Convert the hash buffer to a hex string
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashedValue = hashArray
+      .map((byte) => byte.toString(16).padStart(2, "0"))
+      .join("");
+
+    return hashedValue;
+  } catch (error) {
+    console.error("Error calculating hash:", error);
+    throw error;
+  }
+}

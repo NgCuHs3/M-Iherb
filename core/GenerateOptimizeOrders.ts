@@ -12,10 +12,10 @@ export interface LineItem extends BaseItem {
   quantity: number;
 }
 
-export interface Order {
+export interface Order<T extends LineItem & Product> {
   total: number;
   totalWeight: number;
-  lineItems: LineItem[];
+  lineItems: T[];
   priceScore?: number;
   weightScore?: number;
   score?: number;
@@ -23,21 +23,23 @@ export interface Order {
 
 export interface ConstraintOrder {
   subtotalLimit: number;
+  subtotalLimitBottomPadding: number;
   freeShipMinSp: number;
+  maximumWeightTotal: number;
   underFreeShipTolerance: number;
 }
 
-function getNextItemsOrder(
+function getNextItemsOrder<P extends Product, T extends LineItem & Product>(
   currThreshold: number,
-  nextItems: Product[],
+  nextProducts: P[],
   constraintOrder: ConstraintOrder
-): LineItem[][] {
+): T[][] {
   const { subtotalLimit, freeShipMinSp, underFreeShipTolerance } =
     constraintOrder;
 
-  if (nextItems.length === 0) return [];
+  if (nextProducts.length === 0) return [];
 
-  const currItem = nextItems[0];
+  const currItem = nextProducts[0];
   const spendRemain = subtotalLimit - currThreshold;
 
   // get maximum number current can order
@@ -48,7 +50,7 @@ function getNextItemsOrder(
 
   if (maxCurrNumItem === 0) return [];
 
-  let currItemsOrder: LineItem[][] = [];
+  let currItemsOrder: T[][] = [];
 
   while (maxCurrNumItem >= 0) {
     const newThreshold = currThreshold + maxCurrNumItem * currItem.price;
@@ -56,15 +58,15 @@ function getNextItemsOrder(
     if (newThreshold >= freeShipMinSp - underFreeShipTolerance)
       currItemsOrder.push([
         {
-          ...currItem,
+          ...(currItem as any),
           quantity: maxCurrNumItem,
         },
       ]);
 
     // get next items
-    const nextItemsOrder = getNextItemsOrder(
+    const nextItemsOrder = getNextItemsOrder<P, T>(
       newThreshold,
-      nextItems.slice(1),
+      nextProducts.slice(1),
       constraintOrder
     );
 
@@ -80,7 +82,7 @@ function getNextItemsOrder(
       maxCurrNumItem > 0
         ? nextItemsOrder.map((x) => {
             x.unshift({
-              ...currItem,
+              ...(currItem as any),
               quantity: currQuantity,
             });
             return x;
@@ -128,15 +130,20 @@ function scoreWeight(
   minWeight: number,
   maxWeight: number
 ): number {
+  // it mean that all item have same weight or just one 1 item
+  // so we score all be zero
+  if (minWeight === maxWeight) return 0;
   // the smaller the weight the better order
   return (1 - (totalWeight - minWeight) / (maxWeight - minWeight)) * 100;
 }
 
-function scoreOrders(
-  orders: Order[],
+export function scoreOrders<T extends LineItem & Product>(
+  orders: Order<T>[],
   freeShipMinSp: number,
   priceRatio = 0.7
-): Order[] {
+): Order<T>[] {
+  // no orders so just return empty
+  if (orders.length <= 0) return [];
   // the order score base on 2 metrics price and weight
   // the price - free shipping large than zero but near zero is more good
   // the smaller the weight, the better
@@ -186,17 +193,23 @@ function scoreOrders(
   return orders;
 }
 
-export default function generateOptimizeOrders(
-  products: Product[],
-  constraintOrder: ConstraintOrder
-): Order[] {
-  const { subtotalLimit, freeShipMinSp } = constraintOrder;
+export default function generateOptimizeOrders<
+  P extends Product,
+  T extends LineItem & Product
+>(products: P[], constraintOrder: ConstraintOrder): Order<T>[] {
+  const {
+    subtotalLimit,
+    freeShipMinSp,
+    underFreeShipTolerance,
+    maximumWeightTotal,
+    subtotalLimitBottomPadding,
+  } = constraintOrder;
   // sort the list first
   products.sort((a, b) => a.price - b.price);
 
-  let orders: Order[] = [];
+  let orders: Order<T>[] = [];
 
-  let rawOrders: LineItem[][] = [];
+  let rawOrders: T[][] = [];
 
   for (const item of products) {
     // get maximum number current can order but can't over order limit
@@ -206,13 +219,23 @@ export default function generateOptimizeOrders(
     );
 
     while (maxNumItem > 0) {
-      const remainThreshold = item.price * maxNumItem;
+      const newThreshold = item.price * maxNumItem;
 
       const index = products.indexOf(item);
 
+      const currNumItem = maxNumItem;
+      // allow premature order
+      if (newThreshold >= freeShipMinSp - underFreeShipTolerance)
+        rawOrders.push([
+          {
+            ...(item as any),
+            quantity: currNumItem,
+          },
+        ]);
+
       // get remain products in list
-      const nextItemsOrder = getNextItemsOrder(
-        remainThreshold,
+      const nextItemsOrder = getNextItemsOrder<P, T>(
+        newThreshold,
         products.slice(index + 1),
         constraintOrder
       );
@@ -227,7 +250,7 @@ export default function generateOptimizeOrders(
 
       const mergeItemsOrder = nextItemsOrder.map((x) => {
         x.unshift({
-          ...item,
+          ...(item as any),
           quantity: currQuantity,
         });
         return x;
@@ -238,7 +261,8 @@ export default function generateOptimizeOrders(
       maxNumItem--;
     }
   }
-  // enrich data
+
+  // refer data
   orders = rawOrders.map((order) => {
     return {
       total: order.reduce(
@@ -252,6 +276,13 @@ export default function generateOptimizeOrders(
       lineItems: order,
     };
   });
+
+  // shrink orders with filter orver weight and over upper total limit
+  orders = orders.filter(
+    (order) =>
+      order.totalWeight <= maximumWeightTotal &&
+      order.total <= subtotalLimit - subtotalLimitBottomPadding
+  );
 
   orders = scoreOrders(orders, freeShipMinSp, 0.7);
 
