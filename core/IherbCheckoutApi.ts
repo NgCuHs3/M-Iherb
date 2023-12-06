@@ -4,7 +4,11 @@ import {
   generateIherbItemImage,
   convertPrice,
 } from "../util/data";
-import { IherbApiError, ZIP_CODE_NOT_APPLIED } from "./error";
+import {
+  IherbApiError,
+  PROBE_VETOR_PRODUCT_NOT_QUALIFIED,
+  ZIP_CODE_NOT_APPLIED,
+} from "./error";
 
 export interface IherbModifyItem {
   productId: number;
@@ -60,6 +64,10 @@ export type CustomRequestMethod = (
 class IherbCheckoutApi {
   private baseUrl: string = "https://checkout9.iherb.com";
   private customRequestMethod: CustomRequestMethod | undefined = undefined;
+  private onApiError: (target: IherbCheckoutApi, error: IherbApiError) => void =
+    () => {};
+  private onApiHealthy: (target: IherbCheckoutApi, isHealthy: boolean) => void =
+    () => {};
 
   private async makeRequest(url: string, init: RequestInit): Promise<any> {
     try {
@@ -71,11 +79,27 @@ class IherbCheckoutApi {
         response = (await fetch(url, init)) as any as ResponseIherbApi;
       }
 
-      if (!response.ok)
+      if (!response.ok) {
+        this.onApiHealthy(this, false);
+        // emit this error
+        this.onApiError(
+          this,
+          new IherbApiError(`HTTP error: ${response.status}`, response.status)
+        );
+        // bad request
+        if (response.status === 400) {
+          console.log("Url", url);
+          console.log("RequestInit", init);
+        }
+
         throw new IherbApiError(
           `HTTP error: ${response.status}`,
           response.status
         );
+      }
+
+      // emit healty state
+      this.onApiHealthy(this, true);
 
       const data = await response.json();
       return data;
@@ -106,6 +130,7 @@ class IherbCheckoutApi {
         "accept-Encoding": "gzip, deflate, br",
         "accept-Language": "en-US,en;q=0.9",
       },
+      referrer: "https://checkout9.iherb.com/cart",
       referrerPolicy: "strict-origin-when-cross-origin",
       mode: "cors",
       // delete method don't have payload
@@ -117,6 +142,18 @@ class IherbCheckoutApi {
     };
 
     return init;
+  }
+
+  public setOnApiError(
+    listener: (target: IherbCheckoutApi, error: IherbApiError) => void
+  ) {
+    this.onApiError = listener;
+  }
+
+  public setOnApiHealthy(
+    listener: (target: IherbCheckoutApi, isHealthy: boolean) => void
+  ) {
+    this.onApiHealthy = listener;
   }
 
   // use custom request method for content script
@@ -178,6 +215,11 @@ class IherbCheckoutApi {
         productId: 102333,
         quantity: 3,
       },
+      {
+        // Codeage, Liposomal Magnesium Glycinate, 240 Capsule
+        productId: 115891,
+        quantity: 1,
+      },
     ])) as CartLineItems;
 
     if (!res.shippingMethods || res.shippingMethods?.length <= 0)
@@ -186,6 +228,17 @@ class IherbCheckoutApi {
     const freeShippingMinSpend: number = parseFloat(
       res.shippingMethods[0].freeShippingLocalCurrencyThreshold
     );
+
+    console.log("Get cart info result", res);
+
+    if (res.cartErrors.length <= 0) {
+      throw new IherbApiError(
+        "The probe product vector is not yet qualified",
+        PROBE_VETOR_PRODUCT_NOT_QUALIFIED
+      );
+    }
+
+    // be carefull some time these
 
     const subTotalLimit: number = parseSubTotalLimit(
       res.cartErrors[0].errorMessage

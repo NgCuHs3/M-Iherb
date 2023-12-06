@@ -54,7 +54,9 @@ export interface HashItem {
   code: number | string;
 }
 
-export async function generateHashForOrder(hashItems: HashItem[]) {
+export async function generateHashForOrder(
+  hashItems: HashItem[]
+): Promise<string> {
   const hashString: string = hashItems.reduce((currentStr, item) => {
     return currentStr + `_${item.code}x${item.code}`;
   }, "");

@@ -14,7 +14,7 @@ import generateOptimizeOrders, {
 } from "./GenerateOptimizeOrders";
 
 import { sleepWithCleaner, sleep } from "../util/timer";
-import { IherbApiError, TAB_UNACTIVE_ERROR } from "./error";
+import { API_TEMPORARY_BAN, IherbApiError, TAB_UNACTIVE_ERROR } from "./error";
 
 export interface CleanableIntercept {
   cleanIntercept: Function;
@@ -54,9 +54,9 @@ export class ConditionDesire {
   }
 }
 
-type InfoLineItem = IherbItem & Product & LineItem;
+export type InfoLineItem = IherbItem & Product & LineItem;
 
-type MatchOrder = Order<InfoLineItem>;
+export type MatchOrder = Order<InfoLineItem>;
 
 export // Iherb API will block request if have too many request so we need stop request for while if got block
 class RequestPunisher implements CleanableIntercept {
@@ -237,6 +237,10 @@ export class WatchUpQueue<T> {
   }
 }
 
+export interface MatchOrderIdExpress {
+  (matchOrders: MatchOrder): Promise<boolean>;
+}
+
 class MatchOrders extends EventEmitter {
   private iherbCheckoutApi: IherbCheckoutApi;
   private isIdle: boolean = true;
@@ -250,7 +254,8 @@ class MatchOrders extends EventEmitter {
   // allow underShipping 100k
   private underFreeShipTolerance: number = 50000;
   private maximumShippingAllowed: number = 100000;
-  private subtotalLimitBottomPadding: number = 60000;
+  // it mean top limit about 968
+  private subtotalLimitBottomPadding: number = 95000;
   private maximumWeightTotal: number = 0.5;
   // success mining order
   private successMiningList: MiningResult[] = [];
@@ -258,9 +263,14 @@ class MatchOrders extends EventEmitter {
   private matchTask: Promise<boolean> | undefined;
   private networkPunisher: RequestPunisher;
   private networkJudge: RequestJudge;
+  private matchOrdersIdExpress: MatchOrderIdExpress = (
+    matchOrders: MatchOrder
+  ) => Promise.resolve(true);
+  private onOnceMatchOrderDone: (matchOrder: MatchOrder) => void = () => {};
 
   constructor(iherbCheckoutApi: IherbCheckoutApi) {
     super();
+    this.onNumberOfJobsChange = this.onNumberOfJobsChange.bind(this);
     this.submitOrders = new WatchUpQueue<MatchOrder>();
     this.submitOrders.setWatcher(this.onNumberOfJobsChange);
     this.networkPunisher = new RequestPunisher();
@@ -274,6 +284,20 @@ class MatchOrders extends EventEmitter {
   public async init(): Promise<boolean> {
     await this.getConstraintInfo();
     return true;
+  }
+
+  // use this to check is check that match order should be match to API or not || Or in other words, API cache
+  public setMatchOrdersIdExpress(express: MatchOrderIdExpress) {
+    this.matchOrdersIdExpress = express;
+  }
+
+  // public use this for handle when one match order call API done
+  public setOnOnceMatchOrderDone(listener: (matchOrder: MatchOrder) => void) {
+    this.onOnceMatchOrderDone = listener;
+  }
+
+  public getIsEnbale(): boolean {
+    return this.isEnable;
   }
 
   private onNumberOfJobsChange(submitOrders: MatchOrder[]) {
@@ -329,6 +353,18 @@ class MatchOrders extends EventEmitter {
         // await sleep(200);
 
         const submitOrder = this.submitOrders.shift();
+
+        const isValidId = await this.matchOrdersIdExpress(submitOrder);
+
+        console.log("isValidId match order: ", isValidId);
+        // the match order not valid for call API, skip !
+        if (!isValidId) {
+          // in case request have punish and probate just forgive it
+          this.networkPunisher.forgive();
+          this.networkJudge.forgive();
+          continue;
+        }
+
         let miningResult: MiningResult;
         try {
           // increase the request actions to judge
@@ -366,6 +402,8 @@ class MatchOrders extends EventEmitter {
           this.submitOrders.unshift(submitOrder as MatchOrder);
           continue;
         }
+        // emit match order although don't know good or bad
+        this.onOnceMatchOrderDone(submitOrder);
 
         if (
           miningResult.tax !== 0 ||
@@ -376,7 +414,7 @@ class MatchOrders extends EventEmitter {
         // found perfect order
         this.successMiningList.push(miningResult);
         // emit to observers
-        this.emit("found-good-order", this, miningResult);
+        this.emit("found-good-order", this, submitOrder, miningResult);
       }
 
       // change to idle state
@@ -405,7 +443,7 @@ class MatchOrders extends EventEmitter {
       iherbModifyItems
     );
 
-    if (!this.constraintInfo) throw new Error("ContraintInfo");
+    if (!this.constraintInfo) throw new Error("ContraintInfo is undefined");
     // generates the submit orders (optimize orders)
     const considerOrders: MatchOrder[] = generateOptimizeOrders<
       Product,
@@ -424,8 +462,10 @@ class MatchOrders extends EventEmitter {
 
     console.log("matchList for create submit list", this.matchList);
 
-    const submitList = await this.generateSubmitList(this.matchList);
+    // we have no items to start
+    if (this.matchList.length <= 0) return;
 
+    const submitList = await this.generateSubmitList(this.matchList);
     this.submitOrders.alternative(submitList);
 
     console.log("submitOrders", JSON.stringify(this.submitOrders));
@@ -450,7 +490,9 @@ class MatchOrders extends EventEmitter {
     this.clearMatchData();
   }
 
-  public async addMatchItem(iherbModifyItem: IherbModifyItem) {
+  public async addMatchItem(
+    iherbModifyItem: IherbModifyItem
+  ): Promise<boolean> {
     const existingProduct = this.matchList.find(
       (i) => i.productId === iherbModifyItem.productId
     );
@@ -460,9 +502,17 @@ class MatchOrders extends EventEmitter {
     this.matchList.push(iherbModifyItem);
 
     // create new consider orders
-    const considerOrders: MatchOrder[] = await this.generateSubmitList(
-      this.matchList
-    );
+    let considerOrders: MatchOrder[];
+    try {
+      considerOrders = await this.generateSubmitList(this.matchList);
+    } catch (error) {
+      if (error instanceof IherbApiError && error.code === API_TEMPORARY_BAN) {
+        return false;
+      }
+      throw new Error(
+        "Can't generate submit list while add match item" + error
+      );
+    }
     // just keep the orders that have this new item in
     const shortOrders: MatchOrder[] = considerOrders.filter((order) => {
       const isHaveNewitem = order.lineItems.some(

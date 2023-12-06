@@ -1,5 +1,10 @@
 import { useState } from "react";
 import { useSidePanelContext } from "./contexts/SidePanelContext";
+import {
+  API_TEMPORARY_BAN,
+  HTTP_TOO_MANY_REQUEST,
+  TAB_UNACTIVE_ERROR,
+} from "../core/error";
 
 const getColorsState = (numberOfJobs: number) => {
   switch (true) {
@@ -65,6 +70,50 @@ const Settings = () => {
             </span>
           </span>
         </label>
+        {/* Api Ban */}
+        {(sidePanelState.extensionState.error?.code === API_TEMPORARY_BAN ||
+          sidePanelState.extensionState.error?.code ===
+            HTTP_TOO_MANY_REQUEST) &&
+          !sidePanelState.extensionState.isHealthy && (
+            <p className="text-left text-warning">
+              Iherb api temporary ban, waiting util continue !
+            </p>
+          )}
+        {(sidePanelState.extensionState.error?.code === API_TEMPORARY_BAN ||
+          sidePanelState.extensionState.error?.code ===
+            HTTP_TOO_MANY_REQUEST) &&
+          !sidePanelState.extensionState.isHealthy && (
+            <label className="label cursor-pointer">
+              <span className="label-text">Verify bot to unblock API ban</span>
+              <button
+                className="btn btn-sm"
+                onClick={() =>
+                  chrome.tabs.create({
+                    url: "https://checkout9.iherb.com/cart",
+                  })
+                }
+              >
+                Verify
+              </button>
+            </label>
+          )}
+        {/* No Iherb tab active */}
+        {sidePanelState.extensionState.error?.code === TAB_UNACTIVE_ERROR &&
+          !sidePanelState.extensionState.isHealthy && (
+            <label className="label cursor-pointer">
+              <span className="label-text text-error">
+                None of the active tabs 
+              </span>
+              <button
+                className="btn btn-sm"
+                onClick={() =>
+                  chrome.tabs.create({ url: "https://vn.iherb.com" })
+                }
+              >
+                Open Iherb
+              </button>
+            </label>
+          )}
         {/* In later version */}
         {/* <div className="flex flex-row items-center justify-between">
           <span className="label-text">Total weight maximum</span>

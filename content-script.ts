@@ -1,6 +1,7 @@
 import "./styles/content-script.css";
 import debounce from "./util/debounce";
 import IherbCheckoutApi, { ResponseIherbApi } from "./core/IherbCheckoutApi";
+import { API_TEMPORARY_BAN } from "./core/error";
 
 var notification: HTMLElement;
 
@@ -12,12 +13,19 @@ const onAddMatchButtonClick = async (productId: string) => {
     },
   });
 
-  if (state) {
+  if (state === "ADDED") {
     showNotification("Added item " + productId, "success");
     return;
   }
 
-  showNotification("Added item " + productId, "error");
+  if (state === "ERROR")
+    showNotification(
+      "Please add product later because API is blocked !",
+      "warning"
+    );
+  if (state === "EXISTED") {
+    showNotification(`Item ${productId} already added`, "success");
+  }
 };
 
 function addNotification() {
@@ -49,7 +57,7 @@ var showNotificationTimeid: NodeJS.Timeout | null;
 
 function showNotification(
   text: string,
-  status: "success" | "error",
+  status: "success" | "warning" | "error",
   time = 2500
 ) {
   if (!notification) return;
@@ -64,7 +72,11 @@ function showNotification(
   );
 
   notification.classList.add(
-    status === "success" ? "notification-success" : "notification-error"
+    status === "success"
+      ? "notification-success"
+      : status === "warning"
+      ? "notification-warning"
+      : "notification-error"
   );
 
   notification.classList.add("notification-show");
@@ -203,7 +215,7 @@ async function makeRequest(
 
   return {
     ok: false,
-    status: response?.status || 0,
+    status: response?.status || API_TEMPORARY_BAN,
     data: null,
   };
 }
@@ -219,6 +231,14 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         });
       });
       return true;
+    case "on-found-good-order":
+      showNotification(
+        `Congratulations found good order, Total: ${(
+          request.data.total as number
+        ).toLocaleString()}₫`,
+        "success"
+      );
+      return;
     default:
       break;
   }

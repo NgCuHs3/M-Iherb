@@ -49,6 +49,7 @@ const defaultSidePanelState: SidePanelState = {
   extensionState: {
     isReady: false,
     error: undefined,
+    isHealthy: false,
   },
 };
 
@@ -215,7 +216,6 @@ function registerServiceWorkerEvent(
   dispatchSidePanelState: Dispatch<SidePanelStateReducer>
 ) {
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("Got message from service worker", message);
     switch (message.type) {
       case "update-number-of-jobs":
         dispatchSidePanelState({

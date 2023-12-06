@@ -5,9 +5,13 @@ import IherbCheckoutApi, {
   MiningResult,
   ResponseIherbApi,
 } from "./core/IherbCheckoutApi";
-import MatchOrders from "./core/MatchOrders";
-import { IherbApiError, TAB_UNACTIVE_ERROR } from "./core/error";
-import { generateHashForOrder } from "./util/data";
+import MatchOrders, { MatchOrder } from "./core/MatchOrders";
+import {
+  API_TEMPORARY_BAN,
+  IherbApiError,
+  TAB_UNACTIVE_ERROR,
+} from "./core/error";
+import { HashItem, generateHashForOrder } from "./util/data";
 
 export type MatchItem = Omit<IherbModifyItem, "quantity" | "selected"> & {
   name: string;
@@ -30,6 +34,7 @@ export type GoodOrder = MiningResult & {
 
 export type ExtensionState = {
   isReady: boolean;
+  isHealthy: boolean;
   error:
     | {
         code: number;
@@ -45,6 +50,8 @@ type ServiceInstance = {
   cartInfo: CartInfo | undefined;
   extensionState: ExtensionState | undefined;
 };
+
+type AddProductToStorageState = "ADDED" | "ERROR" | "EXISTED";
 
 const serviceInstance: ServiceInstance = {
   matchOrders: undefined,
@@ -65,11 +72,13 @@ async function initExtensionState(): Promise<ExtensionState> {
     serviceInstance.cartInfo = await getCartInfo();
   } catch (error) {
     if (!(error instanceof IherbApiError)) {
+      console.log("error", error);
       console.error(error);
       new Error("Unkonw error while check app ready");
     }
     return {
       isReady: false,
+      isHealthy: false,
       error: {
         message: (error as IherbApiError).message,
         code: (error as IherbApiError).code,
@@ -77,28 +86,129 @@ async function initExtensionState(): Promise<ExtensionState> {
     };
   }
   return {
+    isHealthy: false,
     isReady: true,
     error: undefined,
   };
 }
 
+async function onIherbApiHealthy(target: IherbCheckoutApi, isHealthy: boolean) {
+  console.log("onIherbApiHealthy: ", isHealthy);
+  if (!serviceInstance.extensionState) return;
+
+  serviceInstance.extensionState.isHealthy = isHealthy;
+
+  chrome.runtime.sendMessage({
+    type: "update-extension-state",
+    data: {
+      extensionState: serviceInstance.extensionState,
+    },
+  });
+}
+
+async function onOnceMatchOrderDone(matchOrder: MatchOrder) {
+  const lineItems = matchOrder.lineItems;
+  // it mean when set of lineitems change price, the match order still valid for match
+  const hashItems: HashItem[] = lineItems
+    .sort((a, b) => a.price - b.price)
+    .map((item) => {
+      return {
+        count: item.quantity,
+        code: `${item.productId}*${item.price}`,
+      } as HashItem;
+    });
+
+  const hash = await generateHashForOrder(hashItems);
+  const data = await chrome.storage.local.get(["matched-order-list"]);
+  const matchedOrderList: Array<string> =
+    (data["matched-order-list"] as Array<string>) || [];
+
+  const existingMatchedOrder = matchedOrderList.find((i) => i === hash);
+  // do nothing
+  if (existingMatchedOrder) return;
+  matchedOrderList.push(hash);
+
+  await chrome.storage.local.set({
+    "matched-order-list": matchedOrderList,
+  });
+
+  console.log(
+    "Cache mining result of matched order to storage ",
+    matchOrder,
+    " | id: " + hash
+  );
+}
+
+// ok just allow match that not exist id
+async function checkMatchOrderIdExpress(
+  matchOrder: MatchOrder
+): Promise<boolean> {
+  const lineItems = matchOrder.lineItems;
+  // it mean when set of lineitems change price, the match order still valid for match
+  const hashItems: HashItem[] = lineItems
+    .sort((a, b) => a.price - b.price)
+    .map((item) => {
+      return {
+        count: item.quantity,
+        code: `${item.productId}*${item.price}`,
+      } as HashItem;
+    });
+
+  const hash = await generateHashForOrder(hashItems);
+
+  const data = await chrome.storage.local.get(["matched-order-list"]);
+  const matchedOrderList: Array<string> =
+    (data["matched-order-list"] as Array<string>) || [];
+
+  const existingMatchedOrder = matchedOrderList.find((i) => i === hash);
+  // match order already match so not valid for match
+  if (existingMatchedOrder) return false;
+  return true;
+}
+
+async function onIherbApiError(
+  target: IherbCheckoutApi,
+  { code, message }: IherbApiError
+) {
+  console.log("onIherbApiError", code, " | ", message);
+
+  if (!serviceInstance.extensionState) return;
+
+  serviceInstance.extensionState.error = {
+    code,
+    message,
+  };
+
+  chrome.runtime.sendMessage({
+    type: "update-extension-state",
+    data: {
+      extensionState: serviceInstance.extensionState,
+    },
+  });
+}
+
 async function onFoundGoodOrder(
   target: MatchOrders,
+  matchOrder: MatchOrder,
   miningResult: MiningResult
 ) {
   const data = await chrome.storage.local.get(["good-order-list"]);
   const goodOrderList: Array<GoodOrder> =
     (data["good-order-list"] as Array<any>) || [];
 
-  console.log("miningResult", miningResult);
+  console.log("Compare match order vs mining result: MatchOrder", matchOrder);
+  console.log(
+    "Compare match order vs mining result: MiningResult",
+    miningResult
+  );
   // add to current good order
   const id = await generateHashForOrder(
-    miningResult.miningOrderItems
+    matchOrder.lineItems
       .sort((a, b) => a.price - b.price)
       .map((item) => {
         return {
           count: item.quantity,
-          code: item.productId,
+          code: `${item.productId}*${item.price}`,
         };
       })
   );
@@ -118,7 +228,27 @@ async function onFoundGoodOrder(
     "good-order-list": goodOrderList,
   });
 
+  console.log("miningResult", miningResult);
+
+  const [tab] = await chrome.tabs.query({
+    active: true,
+    url: ["*://vn.iherb.com/*", "*://checkout9.iherb.com/*"],
+  });
+
   console.log("Good Order to storage", goodOrder);
+  // tab is unactive
+  if (!tab && !serviceInstance.tabId) return;
+
+  chrome.tabs.sendMessage(
+    // try to use backup tab id
+    (tab?.id as number) || (serviceInstance.tabId as number),
+    {
+      type: "on-found-good-order",
+      data: {
+        total: goodOrder.total,
+      },
+    }
+  );
 }
 
 function onUpdateNumberOfJobs(target: MatchOrders, numberOfJobs: number) {
@@ -145,56 +275,58 @@ async function setMatchListToStorage(matchList: MatchItem[]): Promise<void> {
   });
 }
 
-async function addProductToMatchListStorage(item: MatchItem): Promise<boolean> {
+async function addProductToMatchListStorage(
+  item: MatchItem
+): Promise<AddProductToStorageState> {
   const matchList = await getMatchListFromStorage();
 
   const existingProduct = matchList.find((i) => i.productId === item.productId);
 
   if (existingProduct) {
-    return false;
+    return "EXISTED";
   }
 
   matchList.push(item);
 
   await setMatchListToStorage(matchList);
 
-  return true;
+  return "ADDED";
 }
 
 async function sugarAddProductToMatchListStorage(
-  item: MatchItem | IherbModifyItem
-): Promise<boolean> {
+  item: IherbModifyItem
+): Promise<AddProductToStorageState> {
   const matchList = await getMatchListFromStorage();
 
   const existingProduct = matchList.find((i) => i.productId === item.productId);
 
   if (existingProduct) {
-    return true;
+    return "EXISTED";
   }
 
-  // just check is name properties exist
-  if ((item as MatchItem).name) {
-    await addProductToMatchListStorage(item as MatchItem);
-    return true;
-  }
   // it just iherb modify item
-  if (!serviceInstance.iherbCheckoutApi) {
-    serviceInstance.iherbCheckoutApi = new IherbCheckoutApi();
-    serviceInstance.iherbCheckoutApi.setCustomRequestMethod(
-      delegateApiRequestMethod
-    );
+  if (!serviceInstance.iherbCheckoutApi) initIherbCheckoutApi();
+
+  let iherbItem: IherbItem;
+  try {
+    iherbItem = await (
+      serviceInstance.iherbCheckoutApi as IherbCheckoutApi
+    ).mapOnceItem(item as IherbModifyItem);
+  } catch (error) {
+    if (error instanceof IherbApiError && error.code === API_TEMPORARY_BAN)
+      return "ERROR";
+    throw new Error("Error while sugar add product to storage " + error);
   }
 
-  const iherbItem: IherbItem =
-    await serviceInstance.iherbCheckoutApi.mapOnceItem(item as IherbModifyItem);
-
-  return await addProductToMatchListStorage({
+  await addProductToMatchListStorage({
     productId: iherbItem.productId,
     name: iherbItem.name,
     price: iherbItem.price,
     weight: iherbItem.weight,
     image: iherbItem.image,
   });
+
+  return "ADDED";
 }
 
 async function delegateApiRequestMethod(
@@ -261,15 +393,10 @@ async function initMatchOrders() {
   // already init
   if (serviceInstance.matchOrders) return;
 
-  if (!serviceInstance.iherbCheckoutApi) {
-    serviceInstance.iherbCheckoutApi = new IherbCheckoutApi();
-    serviceInstance.iherbCheckoutApi.setCustomRequestMethod(
-      delegateApiRequestMethod
-    );
-  }
+  if (!serviceInstance.iherbCheckoutApi) initIherbCheckoutApi();
 
   serviceInstance.matchOrders = new MatchOrders(
-    serviceInstance.iherbCheckoutApi
+    serviceInstance.iherbCheckoutApi as IherbCheckoutApi
   );
   await serviceInstance.matchOrders.init();
 
@@ -278,15 +405,38 @@ async function initMatchOrders() {
     "update-number-jobs",
     onUpdateNumberOfJobs
   );
+  serviceInstance.matchOrders.setMatchOrdersIdExpress(checkMatchOrderIdExpress);
+  serviceInstance.matchOrders.setOnOnceMatchOrderDone(onOnceMatchOrderDone);
 
   console.log("matchOrders", JSON.stringify(serviceInstance.matchOrders));
 }
 
-async function addProductToMatchOrders(newItem: IherbModifyItem) {
-  // matchOrders not init so create new instance
-  if (!serviceInstance.matchOrders) await initMatchOrders();
+async function initIherbCheckoutApi() {
+  if (serviceInstance.iherbCheckoutApi) return;
+  serviceInstance.iherbCheckoutApi = new IherbCheckoutApi();
+  serviceInstance.iherbCheckoutApi.setCustomRequestMethod(
+    delegateApiRequestMethod
+  );
+  serviceInstance.iherbCheckoutApi.setOnApiError(onIherbApiError);
+  serviceInstance.iherbCheckoutApi.setOnApiHealthy(onIherbApiHealthy);
+}
+
+async function addProductToMatchOrders(
+  newItem: IherbModifyItem
+): Promise<boolean> {
+  try {
+    // matchOrders not init so create new instance
+    if (!serviceInstance.matchOrders) await initMatchOrders();
+  } catch (error) {
+    if (error instanceof IherbApiError && error.code === API_TEMPORARY_BAN)
+      return false;
+    throw new Error(
+      "Can't add product to match orders because can't init match orders instance " +
+        error
+    );
+  }
   // add to product match
-  serviceInstance.matchOrders?.addMatchItem(newItem);
+  return (serviceInstance.matchOrders as MatchOrders).addMatchItem(newItem);
 }
 
 function removeProductFromMatchOrders(item: IherbModifyItem) {
@@ -305,33 +455,32 @@ async function getCartInfo(): Promise<CartInfo> {
   if (serviceInstance.cartInfo)
     return Promise.resolve(serviceInstance.cartInfo);
 
-  if (!serviceInstance.iherbCheckoutApi) {
-    serviceInstance.iherbCheckoutApi = new IherbCheckoutApi();
-    serviceInstance.iherbCheckoutApi.setCustomRequestMethod(
-      delegateApiRequestMethod
-    );
-  }
+  if (!serviceInstance.iherbCheckoutApi) initIherbCheckoutApi();
 
-  serviceInstance.cartInfo = await serviceInstance.iherbCheckoutApi.cartInfo();
+  serviceInstance.cartInfo = await (
+    serviceInstance.iherbCheckoutApi as IherbCheckoutApi
+  ).cartInfo();
 
   return serviceInstance.cartInfo;
 }
 
 // add product to match -> trigger automatic mining orders
-async function handleAddProduct(productId: string): Promise<boolean> {
-  const ok = await sugarAddProductToMatchListStorage({
+async function handleAddProduct(
+  productId: string
+): Promise<AddProductToStorageState> {
+  const state = await sugarAddProductToMatchListStorage({
     productId: parseInt(productId),
   });
 
   // item already exist repeat do nothing
-  if (!ok) return true;
+  if (state === "EXISTED") return "EXISTED";
 
   // add to match orders task
-  addProductToMatchOrders({
+  const isAdded = await addProductToMatchOrders({
     productId: parseInt(productId),
   });
 
-  return true;
+  return isAdded ? "ADDED" : "ERROR";
 }
 
 // get match list items to display
@@ -367,7 +516,10 @@ async function handleClearMatchList(): Promise<boolean> {
 }
 
 async function handleRemoveGoodOrder(goodOrderId: string): Promise<boolean> {
-  const data = await chrome.storage.local.get(["good-order-list"]);
+  const data = await chrome.storage.local.get([
+    "good-order-list",
+    "matched-order-list",
+  ]);
   let goodOrderList: Array<GoodOrder> =
     (data["good-order-list"] as Array<any>) || [];
 
@@ -375,6 +527,17 @@ async function handleRemoveGoodOrder(goodOrderId: string): Promise<boolean> {
 
   await chrome.storage.local.set({
     "good-order-list": goodOrderList,
+  });
+
+  // and delete it cache to
+  let matchedOrderList: Array<string> =
+    (data["matched-order-list"] as Array<string>) || [];
+
+  // id good order and match order are same
+  matchedOrderList = matchedOrderList.filter((id) => id !== goodOrderId);
+
+  await chrome.storage.local.set({
+    "matched-order-list": matchedOrderList,
   });
 
   return true;
@@ -407,6 +570,7 @@ async function handleGetAutoMatch(): Promise<boolean> {
   // if there are not have any value so default is true
   const autoMatch =
     data["auto-match"] === undefined ? true : data["auto-match"];
+
   return autoMatch;
 }
 
@@ -441,6 +605,21 @@ async function handleOnPageLoad() {
       extensionState: serviceInstance.extensionState,
     },
   });
+
+  // try to enable match oroders if it disable
+  const data = await chrome.storage.local.get(["auto-match"]);
+  // if there are not have any value so default is true
+  const autoMatch =
+    data["auto-match"] === undefined ? true : data["auto-match"];
+
+  if (!autoMatch) return;
+
+  if (!serviceInstance.matchOrders) await initMatchOrders();
+
+  if (serviceInstance.matchOrders?.getIsEnbale()) return;
+
+  const matchList = await getMatchListFromStorage();
+  await serviceInstance.matchOrders?.start(matchList);
 }
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
@@ -457,9 +636,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       return true;
     case "add-product":
       // i don't like the way it use then :((
-      handleAddProduct(request.data.productId as string).then((ok) => {
+      handleAddProduct(request.data.productId as string).then((state) => {
         sendResponse({
-          state: true,
+          state,
         });
       });
       return true;

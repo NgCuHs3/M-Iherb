@@ -25,11 +25,6 @@ function App() {
   //   url: "js/index.html",
   // });
 
-  console.log(
-    "SidePanelState extension error",
-    sidePanelState.extensionState.error
-  );
-
   return (
     <div className="App h-full text-neutral">
       {!sidePanelState.extensionState.isReady &&

@@ -33,7 +33,7 @@
     align-items: center;
     color: white;
     min-width: 200px;
-    transition: right 200ms ease-in;
+    transition: all 200ms ease-in;
 }
 
 .sole-notification div {
@@ -41,7 +41,11 @@
 }
 
 .sole-notification.notification-error {
-    background-color: rgb(219, 52, 105);
+    background-color: rgb(248, 15, 15)
+}
+
+.sole-notification.notification-warning {
+    background-color: rgb(249, 216, 31);
 }
 
 .sole-notification.notification-success {
@@ -49,9 +53,11 @@
 }
 
 .sole-notification.notification-hide {
-    right: -200px;
+    transform: translateX(120%);
+    right: -4px;
 }
 
 .sole-notification.notification-show {
     right: 4px;
+    transform: translateX(0%);
 }
