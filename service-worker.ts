@@ -12,6 +12,9 @@ import {
   TAB_UNACTIVE_ERROR,
 } from "./core/error";
 import { HashItem, generateHashForOrder } from "./util/data";
+import UserAuthentication, {
+  AuthenticateState,
+} from "./core/UserAuthentication";
 
 export type MatchItem = Omit<IherbModifyItem, "quantity" | "selected"> & {
   name: string;
@@ -44,6 +47,8 @@ export type ExtensionState = {
 };
 
 type ServiceInstance = {
+  userAuthentication: UserAuthentication | undefined;
+  authenticateState: AuthenticateState | undefined;
   iherbCheckoutApi: IherbCheckoutApi | undefined;
   matchOrders: MatchOrders | undefined;
   tabId: number | undefined;
@@ -54,6 +59,8 @@ type ServiceInstance = {
 type AddProductToStorageState = "ADDED" | "ERROR" | "EXISTED";
 
 const serviceInstance: ServiceInstance = {
+  userAuthentication: undefined,
+  authenticateState: undefined,
   matchOrders: undefined,
   iherbCheckoutApi: undefined,
   tabId: undefined,
@@ -70,6 +77,11 @@ async function initExtensionState(): Promise<ExtensionState> {
   // try to get cart info like a way to check app ready or not
   try {
     serviceInstance.cartInfo = await getCartInfo();
+
+    console.log(
+      "initExtensionState.serviceInstance.cartInfo",
+      serviceInstance.cartInfo
+    );
   } catch (error) {
     if (!(error instanceof IherbApiError)) {
       console.log("error", error);
@@ -335,7 +347,7 @@ async function delegateApiRequestMethod(
 ): Promise<ResponseIherbApi> {
   const [tab] = await chrome.tabs.query({
     active: true,
-    url: ["*://vn.iherb.com/*", "*://checkout9.iherb.com/*"],
+    url: ["*://*.iherb.com/*", "*://checkout9.iherb.com/*"],
   });
 
   // tab is unactive
@@ -389,16 +401,20 @@ async function delegateApiRequestMethod(
   };
 }
 
-async function initMatchOrders() {
+async function initMatchOrders(): Promise<boolean> {
   // already init
-  if (serviceInstance.matchOrders) return;
+  if (serviceInstance.matchOrders) return true;
 
   if (!serviceInstance.iherbCheckoutApi) initIherbCheckoutApi();
 
   serviceInstance.matchOrders = new MatchOrders(
     serviceInstance.iherbCheckoutApi as IherbCheckoutApi
   );
-  await serviceInstance.matchOrders.init();
+
+  const ok = await serviceInstance.matchOrders.init();
+
+  // can't init match orders
+  if (!ok) return false;
 
   serviceInstance.matchOrders.addListener("found-good-order", onFoundGoodOrder);
   serviceInstance.matchOrders.addListener(
@@ -408,7 +424,7 @@ async function initMatchOrders() {
   serviceInstance.matchOrders.setMatchOrdersIdExpress(checkMatchOrderIdExpress);
   serviceInstance.matchOrders.setOnOnceMatchOrderDone(onOnceMatchOrderDone);
 
-  console.log("matchOrders", JSON.stringify(serviceInstance.matchOrders));
+  return true;
 }
 
 async function initIherbCheckoutApi() {
@@ -550,11 +566,15 @@ async function handleGetCartInfo(): Promise<CartInfo> {
 async function handleSetAutoMatch(autoMatch: boolean): Promise<boolean> {
   console.log("handleSetAutoMatch", autoMatch);
   // matchOrders not init so create new instance
-  if (!serviceInstance.matchOrders) await initMatchOrders();
+  if (!serviceInstance.matchOrders) {
+    const ok = await initMatchOrders();
+    if (!ok) return false;
+  }
 
   if (autoMatch) {
     const matchList = await getMatchListFromStorage();
-    await serviceInstance.matchOrders?.start(matchList);
+    const ok = await serviceInstance.matchOrders?.start(matchList);
+    if (!ok) return false;
   }
   if (!autoMatch) serviceInstance.matchOrders?.stop();
 
@@ -562,7 +582,7 @@ async function handleSetAutoMatch(autoMatch: boolean): Promise<boolean> {
     "auto-match": autoMatch,
   });
 
-  return autoMatch;
+  return true;
 }
 
 async function handleGetAutoMatch(): Promise<boolean> {
@@ -620,6 +640,22 @@ async function handleOnPageLoad() {
 
   const matchList = await getMatchListFromStorage();
   await serviceInstance.matchOrders?.start(matchList);
+}
+
+async function handlGetAuthenticateState(): Promise<AuthenticateState> {
+  if (serviceInstance.authenticateState)
+    return Promise.resolve(serviceInstance.authenticateState);
+
+  const { authenticateState } = await chrome.storage.local.get([
+    "authenticate-state",
+  ]);
+
+  if (authenticateState) {
+    serviceInstance.authenticateState = authenticateState;
+    return authenticateState;
+  }
+
+  return Promise.resolve("unauthenticated");
 }
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
@@ -680,16 +716,25 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       });
       return true;
     case "get-cart-info":
-      handleGetCartInfo().then((cartInfo) => {
-        sendResponse({
-          cartInfo,
+      handleGetCartInfo()
+        .then((cartInfo) => {
+          sendResponse({
+            cartInfo,
+          });
+        })
+        .catch(() => {
+          sendResponse({
+            cartInfo: {
+              subTotalLimit: 0,
+              freeShippingMinSpend: 0,
+            } as CartInfo,
+          });
         });
-      });
       return true;
     case "set-auto-match":
-      handleSetAutoMatch(request.data.autoMatch).then((autoMatch) => {
+      handleSetAutoMatch(request.data.autoMatch).then((state) => {
         sendResponse({
-          autoMatch,
+          state,
         });
       });
       return true;
@@ -700,8 +745,115 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         });
       });
       return true;
-
+    case "get-authentication-state":
+      handlGetAuthenticateState().then((authenticateState) => {
+        sendResponse({
+          authenticateState,
+        });
+      });
+      return true;
     default:
       break;
   }
+});
+
+chrome.storage.onChanged.addListener(async (changes, namespace) => {
+  for (const [key, storageChange] of Object.entries(changes)) {
+    switch (key) {
+      case "access-token":
+        // re creat user auth with new token
+        serviceInstance.userAuthentication = new UserAuthentication(
+          storageChange.newValue
+        );
+
+        serviceInstance.authenticateState =
+          await serviceInstance.userAuthentication.authenticate();
+
+        // save it for later use
+        await chrome.storage.local.set({
+          authenticateState: serviceInstance.authenticateState,
+        });
+
+        // update state to sidepanel
+        chrome.runtime.sendMessage({
+          type: "set-is-user-authenticated",
+          data: {
+            authenticatedState: serviceInstance.authenticateState,
+          },
+        });
+
+        break;
+    }
+  }
+});
+
+async function checkAlarmState() {
+  const alarm = await chrome.alarms.get("authenticate-alarm");
+
+  if (!alarm) {
+    await chrome.alarms.create({ delayInMinutes: 1, periodInMinutes: 15 });
+  }
+}
+
+checkAlarmState();
+
+// every 15 check user authenticate sate
+chrome.alarms.onAlarm.addListener(async () => {
+  console.log("Authenticate state alarms check");
+  const data = await chrome.storage.local.get(["access-token"]);
+  const accessToken = data["access-token"];
+
+  if (!serviceInstance.userAuthentication && !accessToken) {
+    serviceInstance.authenticateState = "unauthenticated";
+    // update state to sidepanel
+    chrome.runtime.sendMessage({
+      type: "set-is-user-authenticated",
+      data: {
+        authenticatedState: "unauthenticated",
+      },
+    });
+    return;
+  }
+
+  if (!serviceInstance.userAuthentication && accessToken)
+    serviceInstance.userAuthentication = new UserAuthentication(accessToken);
+
+  // check authentication
+  const authenticateState =
+    await serviceInstance.userAuthentication?.authenticate();
+
+  const numberOfAuthFails =
+    ((await chrome.storage.local.get(["number-of-auth-fails"]))[
+      "number-of-auth-fails"
+    ] as number) || 0;
+
+  // allow keeping current state with 3 times unthenticated
+  if (authenticateState === "unauthenticated" && numberOfAuthFails < 3) {
+    // save it for later use
+    await chrome.storage.local.set({
+      "number-of-auth-fails": numberOfAuthFails + 1,
+    });
+    return;
+  }
+
+  if (authenticateState === "authenticated") {
+    // reset numberOfAuthFails to zero
+    await chrome.storage.local.set({
+      "number-of-auth-fails": 0,
+    });
+  }
+
+  // update new authenticatestate
+  serviceInstance.authenticateState = authenticateState;
+  // update to sidepanel
+  chrome.runtime.sendMessage({
+    type: "set-is-user-authenticated",
+    data: {
+      authenticatedState: serviceInstance.authenticateState,
+    },
+  });
+  // save it for later use
+  await chrome.storage.local.set({
+    "authenticate-state": serviceInstance.authenticateState,
+  });
 });

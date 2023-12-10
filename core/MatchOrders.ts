@@ -14,7 +14,12 @@ import generateOptimizeOrders, {
 } from "./GenerateOptimizeOrders";
 
 import { sleepWithCleaner, sleep } from "../util/timer";
-import { API_TEMPORARY_BAN, IherbApiError, TAB_UNACTIVE_ERROR } from "./error";
+import {
+  API_TEMPORARY_BAN,
+  IherbApiError,
+  MatchOrderError,
+  TAB_UNACTIVE_ERROR,
+} from "./error";
 
 export interface CleanableIntercept {
   cleanIntercept: Function;
@@ -252,10 +257,10 @@ class MatchOrders extends EventEmitter {
   private submitOrders: WatchUpQueue<MatchOrder>;
   private constraintInfo: ConstraintOrder | undefined;
   // allow underShipping 100k
-  private underFreeShipTolerance: number = 50000;
-  private maximumShippingAllowed: number = 100000;
+  private underFreeShipTolerance: number = 0;
+  private maximumShippingAllowed: number = 150000;
   // it mean top limit about 968
-  private subtotalLimitBottomPadding: number = 95000;
+  private subtotalLimitBottomPadding: number = -100000;
   private maximumWeightTotal: number = 0.5;
   // success mining order
   private successMiningList: MiningResult[] = [];
@@ -282,7 +287,21 @@ class MatchOrders extends EventEmitter {
   }
 
   public async init(): Promise<boolean> {
-    await this.getConstraintInfo();
+    try {
+      const cartInfo: CartInfo = await this.iherbCheckoutApi.cartInfo();
+      this.constraintInfo = {
+        subtotalLimit: cartInfo.subTotalLimit,
+        freeShipMinSp: cartInfo.freeShippingMinSpend,
+        underFreeShipTolerance: this.underFreeShipTolerance,
+        subtotalLimitBottomPadding: this.subtotalLimitBottomPadding,
+        maximumWeightTotal: this.maximumWeightTotal,
+      };
+    } catch (error) {
+      if (error instanceof IherbApiError) return false;
+      throw new MatchOrderError(
+        "Can't init match orders, with API error: " + error
+      );
+    }
     return true;
   }
 
@@ -302,17 +321,6 @@ class MatchOrders extends EventEmitter {
 
   private onNumberOfJobsChange(submitOrders: MatchOrder[]) {
     this.emit("update-number-jobs", this, this.submitOrders.count());
-  }
-
-  private async getConstraintInfo() {
-    const cartInfo: CartInfo = await this.iherbCheckoutApi.cartInfo();
-    this.constraintInfo = {
-      subtotalLimit: cartInfo.subTotalLimit,
-      freeShipMinSp: cartInfo.freeShippingMinSpend,
-      underFreeShipTolerance: this.underFreeShipTolerance,
-      subtotalLimitBottomPadding: this.subtotalLimitBottomPadding,
-      maximumWeightTotal: this.maximumWeightTotal,
-    };
   }
 
   private async matchOrders() {
@@ -356,7 +364,6 @@ class MatchOrders extends EventEmitter {
 
         const isValidId = await this.matchOrdersIdExpress(submitOrder);
 
-        console.log("isValidId match order: ", isValidId);
         // the match order not valid for call API, skip !
         if (!isValidId) {
           // in case request have punish and probate just forgive it
@@ -443,7 +450,8 @@ class MatchOrders extends EventEmitter {
       iherbModifyItems
     );
 
-    if (!this.constraintInfo) throw new Error("ContraintInfo is undefined");
+    if (!this.constraintInfo)
+      throw new MatchOrderError("ConstraintInfo is undefined");
     // generates the submit orders (optimize orders)
     const considerOrders: MatchOrder[] = generateOptimizeOrders<
       Product,
@@ -453,24 +461,34 @@ class MatchOrders extends EventEmitter {
     return considerOrders;
   }
 
-  public async start(initItems: IherbModifyItem[]) {
+  public async start(initItems: IherbModifyItem[]): Promise<boolean> {
     // can't start while it is matching
-    if (!this.isIdle) return;
+    if (!this.isIdle) return true;
 
-    this.isEnable = true;
     this.matchList = initItems;
-
     console.log("matchList for create submit list", this.matchList);
-
     // we have no items to start
-    if (this.matchList.length <= 0) return;
+    if (this.matchList.length <= 0) {
+      this.isEnable = true;
+      return true;
+    }
 
-    const submitList = await this.generateSubmitList(this.matchList);
-    this.submitOrders.alternative(submitList);
-
+    try {
+      const submitList = await this.generateSubmitList(this.matchList);
+      this.submitOrders.alternative(submitList);
+    } catch (error) {
+      if (error instanceof IherbApiError || error instanceof MatchOrderError)
+        return false;
+      throw new MatchOrderError(
+        "Can't start match order with API error: " + error
+      );
+    }
     console.log("submitOrders", JSON.stringify(this.submitOrders));
+    // change state
+    this.isEnable = true;
     // start match orders
     this.matchOrders();
+    return true;
   }
 
   public async stop() {
@@ -506,11 +524,11 @@ class MatchOrders extends EventEmitter {
     try {
       considerOrders = await this.generateSubmitList(this.matchList);
     } catch (error) {
-      if (error instanceof IherbApiError && error.code === API_TEMPORARY_BAN) {
+      if (error instanceof IherbApiError || error instanceof MatchOrders)
         return false;
-      }
-      throw new Error(
-        "Can't generate submit list while add match item" + error
+      throw new MatchOrderError(
+        "Can't generate submit list while add match item, with API error: " +
+          error
       );
     }
     // just keep the orders that have this new item in

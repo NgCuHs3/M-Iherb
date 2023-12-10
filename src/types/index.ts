@@ -1,6 +1,7 @@
 import { Dispatch } from "react";
 import { ExtensionState, GoodOrder, MatchItem } from "../../service-worker";
 import { CartInfo } from "../../core/IherbCheckoutApi";
+import { AuthenticateState } from "../../core/UserAuthentication";
 
 export interface ISidePanelContext {
   sidePanelState: SidePanelState;
@@ -12,6 +13,7 @@ export interface ISidePanelContext {
 }
 
 export interface SidePanelState {
+  authenticatedState: AuthenticateState;
   matchItemList: MatchItem[];
   goodOrderList: GoodOrder[];
   cartInfo: CartInfo;
@@ -21,6 +23,7 @@ export interface SidePanelState {
 }
 
 export enum SidePanelStateAction {
+  SetAuthenticatedState = "setAuthenticatedState",
   SetMatchList = "setMatchList",
   SetGoodOrderList = "setGoodOrderList",
   SetCartInfo = "setCartInfo",
@@ -30,6 +33,10 @@ export enum SidePanelStateAction {
 }
 
 export type SidePanelStateReducer =
+  | {
+      type: SidePanelStateAction.SetAuthenticatedState;
+      payload: Pick<SidePanelState, "authenticatedState">;
+    }
   | {
       type: SidePanelStateAction.SetMatchList;
       payload: Pick<SidePanelState, "matchItemList">;

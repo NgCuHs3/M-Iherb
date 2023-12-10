@@ -1,0 +1,18 @@
+GET https://catalog.app.iherb.com/recommendations/selectedforyou
+Sec-Ch-Ua: "Chromium";v="119", "Not?A_Brand";v="24"
+X-Newrelic-Id: undefined
+Sec-Ch-Ua-Mobile: ?0
+Apiseed: 5
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6045.159 Safari/537.36
+Content-Type: application/json
+Pref: {"lac":"en-US","ctc":"VN","crc":"VND","crs":0,"storeid":0,"som":"kilograms"}
+Sec-Ch-Ua-Platform: "Windows"
+Accept: */*
+Origin: https://checkout9.iherb.com
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Mode: cors
+Sec-Fetch-Dest: empty
+Referer: https://checkout9.iherb.com/cart
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.9
+Priority: u=1, i

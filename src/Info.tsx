@@ -18,13 +18,13 @@ const Info = () => {
           <tr>
             <td>FREE Shipping min</td>
             <td>
-              ₫{sidePanelState.cartInfo.freeShippingMinSpend.toLocaleString()}
+              ₫{sidePanelState.cartInfo.freeShippingMinSpend?.toLocaleString()}
             </td>
           </tr>
           {/* row 2 */}
           <tr>
             <td>VN Subtotal Limit</td>
-            <td>₫{sidePanelState.cartInfo.subTotalLimit.toLocaleString()}</td>
+            <td>₫{sidePanelState.cartInfo.subTotalLimit?.toLocaleString()}</td>
           </tr>
         </tbody>
       </table>

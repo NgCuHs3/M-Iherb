@@ -14,12 +14,14 @@ import {
 } from "../types";
 import { CartInfo } from "../../core/IherbCheckoutApi";
 import { ExtensionState } from "../../service-worker";
-
+import { AuthenticateState } from "../../core/UserAuthentication";
 export const appStateReducer = (
   state: SidePanelState,
   { type, payload }: SidePanelStateReducer
 ): SidePanelState => {
   switch (type) {
+    case SidePanelStateAction.SetAuthenticatedState:
+      return { ...state, authenticatedState: payload.authenticatedState };
     case SidePanelStateAction.SetMatchList:
       return { ...state, matchItemList: payload.matchItemList };
     case SidePanelStateAction.SetGoodOrderList:
@@ -38,6 +40,7 @@ export const appStateReducer = (
 };
 
 const defaultSidePanelState: SidePanelState = {
+  authenticatedState: "authenticated",
   matchItemList: [],
   goodOrderList: [],
   cartInfo: {
@@ -75,6 +78,7 @@ const SidePanelContextProvider = ({ children }: { children: ReactNode }) => {
     getBasicData(dispatchSidePanelState);
     registerServiceWorkerEvent(dispatchSidePanelState);
     registerStorageEvent(dispatchSidePanelState);
+    registerExternalMessage(dispatchSidePanelState);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -102,8 +106,9 @@ async function getBasicData(
   const extensionState = await getExtensionReady();
   const matchList = await getMatchList();
   const goodOrderList = await getGoodOrderList();
-  // const cartInfo = await getCartInfo();
+  const cartInfo = await getCartInfo();
   const autoMatch = await getAutoMatch();
+  const authenticatedState = await getAuthenticatedState();
 
   dispatchSidePanelState({
     type: SidePanelStateAction.SetExtensionState,
@@ -123,16 +128,22 @@ async function getBasicData(
       goodOrderList: goodOrderList,
     },
   });
-  // dispatchSidePanelState({
-  //   type: SidePanelStateAction.SetCartInfo,
-  //   payload: {
-  //     cartInfo: cartInfo,
-  //   },
-  // });
+  dispatchSidePanelState({
+    type: SidePanelStateAction.SetCartInfo,
+    payload: {
+      cartInfo: cartInfo,
+    },
+  });
   dispatchSidePanelState({
     type: SidePanelStateAction.SetAutoMatch,
     payload: {
       autoMatch: autoMatch,
+    },
+  });
+  dispatchSidePanelState({
+    type: SidePanelStateAction.SetAuthenticatedState,
+    payload: {
+      authenticatedState: authenticatedState,
     },
   });
 }
@@ -190,6 +201,13 @@ async function getAutoMatch(): Promise<boolean> {
   return autoMatch;
 }
 
+async function getAuthenticatedState(): Promise<AuthenticateState> {
+  const { authenticateState } = await chrome.runtime.sendMessage({
+    type: "get-authentication-state",
+  });
+  return authenticateState;
+}
+
 async function removeGoodOrder(goodOrderId: string): Promise<boolean> {
   console.log("Remove good order", goodOrderId);
   const { state } = await chrome.runtime.sendMessage({
@@ -203,13 +221,13 @@ async function removeGoodOrder(goodOrderId: string): Promise<boolean> {
 
 async function setAutoMatch(autoMatch: boolean): Promise<boolean> {
   console.log("Set auto match", autoMatch);
-  const { autoMatch: newAutoMatch } = await chrome.runtime.sendMessage({
+  const { state } = await chrome.runtime.sendMessage({
     type: "set-auto-match",
     data: {
       autoMatch,
     },
   });
-  return newAutoMatch;
+  return state;
 }
 // handle event from service worker
 function registerServiceWorkerEvent(
@@ -241,6 +259,14 @@ function registerServiceWorkerEvent(
           },
         });
         break;
+      case "set-is-user-authenticated":
+        dispatchSidePanelState({
+          type: SidePanelStateAction.SetAuthenticatedState,
+          payload: {
+            authenticatedState: message.data.authenticatedState,
+          },
+        });
+        break;
     }
   });
 }
@@ -269,10 +295,6 @@ function registerStorageEvent(
           });
           break;
         case "auto-match":
-          console.log(
-            "auto-match --> from strorage listen",
-            storageChange.newValue
-          );
           dispatchSidePanelState({
             type: SidePanelStateAction.SetAutoMatch,
             payload: {
@@ -285,4 +307,25 @@ function registerStorageEvent(
       }
     }
   });
+}
+
+function registerExternalMessage(
+  dispatchSidePanelState: Dispatch<SidePanelStateReducer>
+) {
+  chrome.runtime.onMessageExternal.addListener(
+    async (request, sender, sendResponse) => {
+      switch (request.type) {
+        case "set-access-token":
+          if (request.data.accessToken) {
+            console.log("Token: ", request.data.accessToken);
+            sendResponse({ success: true, message: "Token has been received" });
+            //set token to storage
+            await chrome.storage.local.set({
+              "access-token": request.data.accessToken,
+            });
+          }
+          break;
+      }
+    }
+  );
 }

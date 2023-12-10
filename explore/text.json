@@ -1,3 +1,9 @@
 {
-    "couponCode": "new20"
+    "priceRanges": [
+        [
+            100000,
+            250000
+        ]
+    ],
+    "limit": 15
 }

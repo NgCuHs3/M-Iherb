@@ -128,66 +128,41 @@ const debounceAddMatchButton = debounce(addMatchButton, 100);
 // it will bind to product container listen to product change
 // Function to handle mutations in the document
 function handleDocumentMutations() {
+  console.log("Document mutation !");
   // we should debounce it
   debounceAddMatchButton();
 }
 
-// Select the target node (the entire document)
-const targetNode = document.querySelector(".container-fluid") as Node;
+function initWatchMutation() {
+  console.log("initWatchMutation");
+  // Select the target node (the entire document)
+  const targetNode = document.querySelector(
+    ".container-fluid:not(.sticky-header-menu)"
+  ) as Node;
 
-// Create a MutationObserver instance
-const observer = new MutationObserver(handleDocumentMutations);
+  console.log("targetNode", targetNode);
 
-// Configure the observer to watch for changes in attributes and the addition/removal of child nodes
-const config = { childList: true, attributes: true, subtree: true };
+  if (!targetNode) {
+    console.error("TargetNode .container-fluid not exits");
+    reinitWatchMutation();
+  }
 
-// Start observing the target node (document) for mutations
-observer.observe(targetNode, config);
+  // Create a MutationObserver instance
+  const observer = new MutationObserver(handleDocumentMutations);
+
+  // Configure the observer to watch for changes in attributes and the addition/removal of child nodes
+  const config = { childList: true, attributes: true, subtree: true };
+
+  // Start observing the target node (document) for mutations
+  observer.observe(targetNode, config);
+}
+
+const reinitWatchMutation = debounce(initWatchMutation, 100);
 
 // call the first time when pages is loaded
 addNotification();
 addMatchButton();
-
-// Function to get cookies for the current website
-async function getCookies() {
-  const iherbApi = new IherbCheckoutApi();
-  const res = await iherbApi.addLineItems([
-    {
-      productId: 106239,
-      quantity: 2,
-    },
-    {
-      productId: 78386,
-      quantity: 2,
-    },
-  ]);
-
-  await iherbApi.clearLineItems();
-
-  const cartInfo = await iherbApi.cartInfo();
-
-  console.log(cartInfo);
-
-  const items = await iherbApi.mapItems([
-    {
-      productId: 9743,
-    },
-    {
-      productId: 78386,
-    },
-    {
-      productId: 102333,
-    },
-    {
-      productId: 88365,
-    },
-  ]);
-
-  console.log(items);
-}
-
-// Call the function when the content script is injected
-// getCookies();
+initWatchMutation();
 
 async function makeRequest(
   url: string,
@@ -247,4 +222,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 // notify to service have iherb page load
 chrome.runtime.sendMessage({
   type: "on-page-load",
+  data: {
+    url: window.location.href,
+  },
 });

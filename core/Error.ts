@@ -3,6 +3,7 @@ export const ZIP_CODE_NOT_APPLIED = 789321;
 export const TAB_UNACTIVE_ERROR = 123456;
 export const PROBE_VETOR_PRODUCT_NOT_QUALIFIED = 131131;
 export const HTTP_TOO_MANY_REQUEST = 429;
+export const NOT_FOUND_MIN_SHIPPING_FREE = 513123;
 
 export class IherbApiError extends Error {
   public message: string = "Unkown error";
@@ -13,5 +14,15 @@ export class IherbApiError extends Error {
 
     this.message = message;
     this.code = code;
+  }
+}
+
+export class MatchOrderError extends Error {
+  public message: string = "Unkown error";
+  constructor(message: string) {
+    // Calling the constructor of the base class (Error)
+    super(message);
+
+    this.message = message;
   }
 }

@@ -1,4 +1,5 @@
 import CartLineItems, { LineItem } from "./CartLineItems";
+import RecommendationItem from "./RecommendationItem";
 import {
   parseSubTotalLimit,
   generateIherbItemImage,
@@ -6,6 +7,7 @@ import {
 } from "../util/data";
 import {
   IherbApiError,
+  NOT_FOUND_MIN_SHIPPING_FREE,
   PROBE_VETOR_PRODUCT_NOT_QUALIFIED,
   ZIP_CODE_NOT_APPLIED,
 } from "./error";
@@ -63,6 +65,7 @@ export type CustomRequestMethod = (
 
 class IherbCheckoutApi {
   private baseUrl: string = "https://checkout9.iherb.com";
+  private inferiorUrl: string = "https://catalog.app.iherb.com";
   private customRequestMethod: CustomRequestMethod | undefined = undefined;
   private onApiError: (target: IherbCheckoutApi, error: IherbApiError) => void =
     () => {};
@@ -104,7 +107,6 @@ class IherbCheckoutApi {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error(error);
       throw error;
     }
   }
@@ -121,7 +123,6 @@ class IherbCheckoutApi {
         "user-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6045.159 Safari/537.36",
         "Content-Type": "application/json",
-        pref: '{"lac":"en-US","ctc":"VN","crc":"VND","crs":0,"storeid":0,"som":"kilograms"}',
         "sec-Ch-Ua-Platform": "Windows",
         accept: "*/*",
         "sec-Fetch-Site": "same-origin",
@@ -130,7 +131,7 @@ class IherbCheckoutApi {
         "accept-Encoding": "gzip, deflate, br",
         "accept-Language": "en-US,en;q=0.9",
       },
-      referrer: "https://checkout9.iherb.com/cart",
+      referrer: "https://vn.iherb.com/",
       referrerPolicy: "strict-origin-when-cross-origin",
       mode: "cors",
       // delete method don't have payload
@@ -197,6 +198,19 @@ class IherbCheckoutApi {
     return this.makeRequest(url, init);
   }
 
+  public async recommendationsFreeShipping(): Promise<RecommendationItem[]> {
+    const url = `${this.inferiorUrl}/recommendations/cartfreeshipping`;
+    const init = this.createRequestInit(
+      {
+        // select product to 0 $ to 30$
+        priceRanges: [[0, 20]],
+        limit: 20,
+      },
+      "POST"
+    );
+    return this.makeRequest(url, init);
+  }
+
   // get all important inform of orders in VN
   // the trick is create all over costs order to get
   // subtotal limit, free shipping threshold
@@ -204,49 +218,57 @@ class IherbCheckoutApi {
     // clear cart first
     await this.clearLineItems();
 
-    const res = (await this.addLineItems([
-      {
-        // NOW Foods, Ultra Omega-3, 500 EPA / 250 DHA, 180 Enteric Coated Softgels
-        productId: 62118,
-        quantity: 3,
-      },
-      {
-        // NOW Foods, Double Strength L-Theanine, 200 mg, 120 Veg Capsules
-        productId: 102333,
-        quantity: 3,
-      },
-      {
-        // Codeage, Liposomal Magnesium Glycinate, 240 Capsule
-        productId: 115891,
-        quantity: 1,
-      },
-    ])) as CartLineItems;
+    // const recommendationItems = await this.recommendationsFreeShipping();
 
-    if (!res.shippingMethods || res.shippingMethods?.length <= 0)
-      throw new IherbApiError("Zip code wasn't applied", ZIP_CODE_NOT_APPLIED);
+    // console.log("recommendationsFreeShipping", recommendationItems);
 
-    const freeShippingMinSpend: number = parseFloat(
-      res.shippingMethods[0].freeShippingLocalCurrencyThreshold
-    );
+    // const res = (await this.addLineItems([
+    //   {
+    //     // California Gold Nutrition, Omega-3 Premium Fish Oil, 180 EPA / 120 DHA, 100 Fish Gelatin Softgels
+    //     productId: 62118,
+    //     quantity: 2,
+    //   },
+    //   {
+    //     // NOW Foods, Omega-3, 180 EPA / 120 DHA, 100 Softgels
+    //     productId: 102333,
+    //     quantity: 2,
+    //   },
+    // ])) as CartLineItems;
+    // console.log("Get cart info result", res);
 
-    console.log("Get cart info result", res);
+    // if (!res.shippingMethods || res.shippingMethods?.length <= 0)
+    //   throw new IherbApiError("Zip code wasn't applied", ZIP_CODE_NOT_APPLIED);
 
-    if (res.cartErrors.length <= 0) {
-      throw new IherbApiError(
-        "The probe product vector is not yet qualified",
-        PROBE_VETOR_PRODUCT_NOT_QUALIFIED
-      );
-    }
+    // const freeShippingMinSpend: number = parseFloat(
+    //   res.shippingMethods[0].freeShippingLocalCurrencyThreshold
+    // );
 
-    // be carefull some time these
+    // if (!freeShippingMinSpend)
+    //   throw new IherbApiError(
+    //     "Can't get free shipping minimum speed",
+    //     NOT_FOUND_MIN_SHIPPING_FREE
+    //   );
 
-    const subTotalLimit: number = parseSubTotalLimit(
-      res.cartErrors[0].errorMessage
-    );
+    // if (!freeShippingMinSpend)
+    //   throw new IherbApiError(
+    //     "Can't get free shipping Min spend ",
+    //     NOT_FOUND_MIN_SHIPPING_FREE
+    //   );
+    // if (res.cartErrors.length <= 0) {
+    //   throw new IherbApiError(
+    //     "The probe product vector is not yet qualified",
+    //     PROBE_VETOR_PRODUCT_NOT_QUALIFIED
+    //   );
+    // }
+
+    // // be carefull some time these
+    // const subTotalLimit: number = parseSubTotalLimit(
+    //   res.cartErrors[0].errorMessage
+    // );
 
     return {
-      freeShippingMinSpend,
-      subTotalLimit,
+      freeShippingMinSpend: 900000,
+      subTotalLimit: 1063674,
     } as CartInfo;
   }
 
